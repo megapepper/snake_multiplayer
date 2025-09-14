@@ -17,27 +17,45 @@ const delay = 50
 let snakes = []
 let food = []
 let directions = []
-let foodEaten = false
-let cntFoodEaten = 0
-let prevDir = RIGHT
+let foodEaten = []
+let cntFoodEaten = []
 let isFinish = false
+let isStart = false
+let cntConnections = 0
+let limitSnakes = 2//Math.floor(FIELD_HEIGHT / 2)
+let winnerId = -1
 
 
-function initSnake(n = 0) {
-    row_mid = Math.floor(FIELD_HEIGHT / 2)
-    col_mid = Math.floor(FIELD_WIDTH / 2)
-    head_row = row_mid
-    head_col = col_mid + 1
-    tail_row = row_mid
-    tail_col = col_mid - 1
+app.use(express.json())
+app.listen(port, () => {
+    console.log(`App listening on port ${port}`)
+})
 
-    snakes[n] = [[head_row, head_col], [row_mid, col_mid], [tail_row, tail_col]]
-    directions[n] = RIGHT
+function checkSnakeExists(id) {
+    return id < cntConnections
+}
+
+function initSnakes() {
+    let row_center = Math.floor(FIELD_HEIGHT / 2)
+    let col_center = Math.floor(FIELD_WIDTH / 2)
+    for (let id = 1; id <= cntConnections; id++) {
+        let shift = (-1) ** (id + 1) * 2 * Math.floor(id / 2)
+        let head_row = row_center + shift
+        let head_col = col_center + 1
+        let mid_row = tail_row = head_row
+        let mid_col = col_center
+        let tail_col = col_center - 1
+        snakes[id - 1] = [[head_row, head_col], [mid_row, mid_col], [tail_row, tail_col]]
+        console.log(snakes[id - 1])
+        directions[id - 1] = RIGHT
+        foodEaten[id - 1] = false
+        cntFoodEaten[id - 1] = 0
+    }
 }
 
 function getFilledCells() {
     let filledCells = []
-    for (i = 0; i < snakes.length; i++) {
+    for (let i = 0; i < snakes.length; i++) {
         snakes[i].forEach(x => filledCells.push(x[0] * FIELD_WIDTH + x[1]))
     }
     food.forEach(x => filledCells.push(x))
@@ -46,9 +64,10 @@ function getFilledCells() {
 
 function generateFood() {
     let filledCells = getFilledCells()
-    pos = Math.floor(Math.random() * (FIELD_WIDTH * FIELD_HEIGHT - filledCells.length))
-    cnt = 0
-    for (i = 0; i < FIELD_WIDTH * FIELD_HEIGHT; i++) {
+    let pos = Math.floor(Math.random() * (FIELD_WIDTH * FIELD_HEIGHT - filledCells.length))
+    let cnt = 0
+    let i = 0
+    for (; i < FIELD_WIDTH * FIELD_HEIGHT; i++) {
         if (filledCells.includes(i)) continue
         if (cnt == pos) {
             break
@@ -64,135 +83,190 @@ function initFood() {
     }
 }
 
-function eatFood(n = 0) {
+function eatFood(id) {
     function deleteFood(pos) {
         var index = food.indexOf(pos)
         food.splice(index, 1)
     }
-    let snake1d = snakes[n].map(function (x) { return x[0] * FIELD_WIDTH + x[1] })
+    let snake1d = snakes[id].map(function (x) { return x[0] * FIELD_WIDTH + x[1] })
     head_pos = snake1d[0]
     if (food.includes(head_pos)) {
         deleteFood(head_pos)
         generateFood()
-        foodEaten = true
-        cntFoodEaten++
+        foodEaten[id] = true
+        cntFoodEaten[id]++
     }
 }
 
-function move(dir, n = 0) {
-    [head_row, head_col] = snakes[n][0]
-    if (foodEaten) {
-        [tail_row, tail_col] = snakes[n].at(-1)
-        foodEaten = false
+function move(dir, id) {
+    [head_row, head_col] = snakes[id][0]
+    if (foodEaten[id]) {
+        [tail_row, tail_col] = snakes[id].at(-1)
+        foodEaten[id] = false
     }
     else {
-        [tail_row, tail_col] = snakes[n].pop()
+        [tail_row, tail_col] = snakes[id].pop()
     }
     switch (dir) {
         case RIGHT:
-            new_head_col = head_col + 1 >= FIELD_WIDTH ? 0 : head_col + 1
-            snakes[n].unshift([head_row, new_head_col])
+            snakes[id].unshift([head_row, head_col + 1 >= FIELD_WIDTH ? 0 : head_col + 1])
             break
         case LEFT:
-            new_head_col = head_col - 1 < 0 ? FIELD_WIDTH - 1 : head_col - 1
-            snakes[n].unshift([head_row, new_head_col])
+            snakes[idn].unshift([head_row, head_col - 1 < 0 ? FIELD_WIDTH - 1 : head_col - 1])
             break
         case UP:
-            new_head_row = head_row - 1 < 0 ? FIELD_HEIGHT - 1 : head_row - 1
-            snakes[n].unshift([new_head_row, head_col])
+            snakes[id].unshift([head_row - 1 < 0 ? FIELD_HEIGHT - 1 : head_row - 1, head_col])
             break
         case DOWN:
-            new_head_row = head_row + 1 >= FIELD_HEIGHT ? 0 : head_row + 1
-            snakes[n].unshift([new_head_row, head_col])
+            snakes[id].unshift([head_row + 1 >= FIELD_HEIGHT ? 0 : head_row + 1, head_col])
             break
     }
 }
 
-function checkLoss(n = 0) {
-    // надо проверять, если врезались в другую змейку
-    // если две головы врезались в друг друга - то победил тот, кто больше
-    // если одинаковы - проиграли оба
-    let snake1d = snakes[n].map(function (x) { return x[0] * FIELD_WIDTH + x[1] })
-    head_pos = snake1d[0]
-    if (snake1d.slice(1).includes(head_pos)) {
-        clearInterval(intervalId)
-        isFinish = true
-        console.log('LOSS')
+function isCrashed(id) {
+    // +надо проверять, если врезались в другую змейку
+    // +если две головы врезались в друг друга - то победил тот, кто больше
+    // +если одинаковы - проиграли оба
+    console.log("checking loss for snake id: " + id)
+    console.log("checking loss for snake: " + snakes[id])
+    let snake1 = snakes[id].map(function (x) { return x[0] * FIELD_WIDTH + x[1] })
+    let head_pos = snake1[0]
+    for (let i = 0; i < cntConnections; i++) {
+        if (i == id || snakes[i] == []) continue
+        let snake2 = snakes[i].map(function (x) { return x[0] * FIELD_WIDTH + x[1] })
+        if (snake2.slice(1).includes(head_pos)) return true
+        if (snake2[0] == head_pos) return (snake1.length <= snake2.length)
+    }
+    return false
+}
+
+function checkLoss(id) {
+    if (isCrashed(id)) {
+        snakes[id] = []
+        let aliveSnakes = snakes.filter(arr => arr.length > 0)
+        let cntAliveSnakes = aliveSnakes.length
+        if (cntAliveSnakes <= 1) {
+            isFinish = true
+            clearInterval(intervalId)
+            winnerId = snakes.findIndex(arr => arr.length > 0)
+        }
     }
 }
 
-let dir = RIGHT
 let timeDelay = 0
 let intervalId
 
 function startInterval() {
     intervalId = setInterval(() => {
+        console.log(directions)
+        console.log(snakes)
+        console.log("connections count: " + cntConnections)
         timeDelay += delay
         if (timeDelay >= timeMove) {
-            // для множества змеек надо будет проходится по массиву всех snake_id
             timeDelay = 0
-            if (dir == null) {
-                return
+            for (let i = 0; i < cntConnections; i++) {
+                console.log("moving snake: " + i)
+                if (directions[i] == null) {
+                    console.log("skip moving snake: " + i)
+                    return
+                }
+                if ([RIGHT, LEFT, UP, DOWN].includes(directions[i])) {
+                    console.log("moving snake to direction: " + directions[i])
+                    move(directions[i], i)
+                }
+                eatFood(i)
+                checkLoss(i)
             }
-            if ([RIGHT, LEFT, UP, DOWN].includes(dir)) {
-                move(dir)
-            }
-            eatFood()
-            checkLoss()
-            console.log('- ', snakes[0])
-            prevDir = dir
         }
     }, delay)
 }
 
 
-app.get('/', (req, res) => {
+app.get('/ping', (req, res) => {
     res.send('OK')
 })
 
-app.use(express.json())
-
-app.listen(port, () => {
-    console.log(`App listening on port ${port}`)
+app.post('/init', (req, res) => {
+    clearInterval(intervalId)
+    limitSnakes = req.body.limitConnections
+    snakes = []
+    cntConnections = 0
+    food = []
+    directions = []
+    foodEaten = []
+    cntFoodEaten = []
+    isFinish = false
+    isStart = false
+    cntConnections = 0
+    winnerId = -1
+    res.send('Game inited')
 })
 
-app.post('/start', (req, res) => {
-    initSnake()
+app.post('/connect', (_, res) => {
+    if (isStart) { res.send('Game already started') }
+    else {
+        if (cntConnections >= limitSnakes) { res.send('Limit snakes number') }
+        else {
+            let current = cntConnections
+            cntConnections += 1
+            res.json({ cntConnections: current })
+        }
+    }
+})
+
+app.post('/start', (_, res) => {
+    initSnakes()
     initFood()
     startInterval()
+    isStart = true
     res.send('Game started')
 })
 
-// 1. сделать метод POST /init с указанием числа игроков -  сбрасывает всё внутреннее состояние к начальному (массив змеек пустой, интервал удален)
-// 2. сделать метод POST /connect - возвращает snake_id
-//    - /connect просто возвращает следующий доступный snake_id
-//    - /connect должен сохранять кол-во подключенных игроков
-//    - /connect возвращает ошибку, если игра уже началась
-// 3. POST /start должен стартовать игру для подключенных змеек
-// 4. GET /state должен в том числе говорить, началась ли игра и сколько клиентов подключено
-
-app.get('/state', (req, res) => {
-    // принимать номер змейки, для которой хотим получить состояние в get-параметрах
-    // выглядеть это будет так: /state?snake_id=0 или /state?snake_id=1
-    // почитать про  get-параметры (их можно использовать в GET, POST, и т.д., просто они так называются)
-
-    // добавить флаг, что проиграли или победили
-    res.json({isFinish: isFinish, snake: snakes[0], food: food});
+app.get('/state/:id', (req, res) => {
+    let snakeId = parseInt(req.params.id, 10)
+    if (!checkSnakeExists(snakeId)) { res.send('This snakeId does not exist') }
+    else {
+        res.json({
+            isStart: isStart, isFinish: isFinish, snakes: snakes,
+            cntConnections: cntConnections, snakeId: snakeId, food: food
+        })
+    }
 })
 
 app.post('/direction', (req, res) => {
-    const snake_id = req.body.snake_id
-    // 1. менять направление конкретной змейки (а не всех, как сейчас)
-    // 2. получать snake_id в get-параметрах
-    dir = req.body.dir
-    switch (dir) {
-    case UP: console.log('UP'); break;
-    case DOWN: console.log('DOWN'); break;
-    case LEFT: console.log('LEFT'); break;
-    case RIGHT: console.log('RIGHT'); break;
+    const snakeId = req.body.snake_id
+    // 1. получать snakeId в get-параметрах (а не в body)
+    if (!checkSnakeExists(snakeId)) { res.send('This snakeId does not exist') }
+    else {
+        let keyCode = req.body.dir
+        if ([RIGHT, LEFT, UP, DOWN].includes(keyCode)) {
+            if (keyCode == RIGHT && directions[snakeId] != LEFT || keyCode == LEFT && directions[snakeId] != RIGHT ||
+                keyCode == UP && directions[snakeId] != DOWN || keyCode == DOWN && directions[snakeId] != UP) {
+                directions[snakeId] = keyCode
+            }
+            switch (keyCode) {
+                case UP: console.log('UP'); break;
+                case DOWN: console.log('DOWN'); break;
+                case LEFT: console.log('LEFT'); break;
+                case RIGHT: console.log('RIGHT'); break;
+            }
+            res.send('got a dir for snake')
+        }
     }
-    res.send('got a dir for snake')
 })
 
-// сделать метод GET /ping, который просто возвращает 200
-// это нужно чтобы клиент мог проверить доступность сервера
+// 1. Рефакторинг
+//    - сделать класс (!!!) с игрой змейка
+//    - у класса должен быть понятный интерфейс с конструтором (инициализация игры) и методами
+//    - основные методы: получить информацию об игре, сделать шаг игры, изменить направление змейки
+//    - разделить на файлы
+//    - плюс тесты на класс с логикой
+// 2. Сделать нормальный verbose
+//    - параметр запуска сервера с уровнем логирования (отключено и включено)
+//    - если включено - надо красиво и понятно в консоли отображать что происходит
+// 3. Начать писать фронт - страница с окном запуска игры, на этой странице
+//    - указывается адрес backend-а (localhost:8080 по-умолчанию)
+//    - параметры для init (limit connections и т.п.)
+//    - показывать число подключенных игроков (возможно нужно добавить доп метод на бэк для этого)
+//    - кнопка старт - стартует игру и закрывает диалог - поле пока не делаем
+
