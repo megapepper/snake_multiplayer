@@ -1,21 +1,17 @@
-import * as func from './back.cjs'
+import * as snake from './snake.cjs'
 import express from 'express'
-
-// TODO: func - это общепринято нызвать моделью - переимновать в model, или даже в snake - так понятнее будет
 
 const args = process.argv;
 
-// TODO: почему только он с большой?
-const Verbose = args.includes('--verbose');
+const verbose = args.includes('--verbose');
 
 const app = express()
 const port = 8080
 
-// TODO: g_
-const timeMove = 400
-const delay = 50
+const g_timeMove = 400
+const g_delay = 50
 
-const directions = { 37: 'LEFT', 38: 'UP', 39: 'RIGHT', 40: 'DOWN' }
+const directions = { LEFT: 'LEFT', UP: 'UP', RIGHT: 'RIGHT', DOWN: 'DOWN' }
 
 let g_timeDelay = 0
 let g_intervalId
@@ -24,10 +20,14 @@ let g_config
 let g_game
 
 
+function logif(verbose, str, status = 0) {
+    if (status != 0) console.log(`status code: ${status}`)
+    if (verbose) console.log(str)
+}
+
+
 app.use(express.json())
-app.listen(port, () => {
-    if (Verbose) { console.log(`App listening on port ${port}\n`) }
-})
+app.listen(port, () => { logif(verbose, `App listening on port ${port}\n`) })
 
 
 app.get('/ping', (_, res) => {
@@ -36,90 +36,87 @@ app.get('/ping', (_, res) => {
 
 app.post('/init', (req, res) => {
     clearInterval(g_intervalId)
-    g_config = new func.Config(req.body.limitConnections)
+    g_config = new snake.Game.Config(req.body.limitConnections)
     g_game = null
     res.send('Game inited')
-    // TODO: вытащить в функцию логирования, которая сама решает - надо ли писать что-то в лог
-    if (Verbose) { console.log('--- GAME INITED ---\n') }
+    logif(verbose, '--- GAME INITED ---\n')
 })
 
 app.post('/connect', (_, res) => {
-    if (Verbose) { console.log('Trying to connect a new snake: ') }
+    logif(verbose, 'Trying to connect a new snake: ')
     if (g_game !== null) {
-        // TODO: мы не должны в случае ошибки отвечать кодом 200 (код можно посмотреть вызвав curl с флогом -vvv), и так везде
-        res.send('Game already started')
-        if (Verbose) { console.log('Failed, the game has already started\n') }
+        let status = 405
+        res.status(status).send('Game already started')
+        logif(verbose, 'Failed, the game has already started\n', status)
     }
     else {
         if (g_config.get_cntConnections() >= g_config.get_limitSnake()) {
-            res.send('Limit snakes number is over')
-            if (Verbose) { console.log('Failed, snake limit reached\n') }
+            let status = 405
+            res.status(status).send('Limit snakes number is over')
+            logif(verbose, 'Failed, snake limit reached\n', status)
         }
         else {
             let new_id = g_config.add_connection() - 1
-            // TODO: пользователю наверно нужно отдавать id а не число подключений
-            res.json({ cntConnections: new_id })
-            if (Verbose) { console.log(`Success, snake number ${new_id} is connected\n`) }
+            res.json({ snakeId: new_id })
+            logif(verbose, `Success, snake number ${new_id} is connected\n`)
         }
     }
 })
 
 app.post('/start', (_, res) => {
-    g_game = new func.SnakeGame(g_config)
+    g_game = new snake.Game(g_config)
     startInterval()
     res.send('Game started')
-    if (Verbose) { console.log('--- GAME STARTED ---\n') }
+    logif(verbose, '--- GAME STARTED ---\n')
 })
 
 app.get('/state/:id', (req, res) => {
-    // TODO: а если не число придёт, то что?
-    let snakeId = parseInt(req.params.id, 10)
-    if (Verbose) { console.log(`Trying to get game state for snake  ${snakeId}: `) }
+    let snakeId = parseInt(req.params.id)
+    if (!Number.isInteger(snakeId)) {
+        let status = 415
+        res.status(status).send('Only integer snake id is allowed')
+        logif(verbose, 'Only integer snake id is allowed', status)
+        return
+    }
+    logif(verbose, `Trying to get game state for snake  ${snakeId}: `)
     if (g_game == null || !g_game.get_isStart()) {
-        res.send('Game hasnt started yet')
-        if (Verbose) { console.log('Failed, game hasnt started yet\n') }
+        let status = 400
+        res.status(status).send('Game hasnt started yet')
+        logif(verbose, 'Failed, game hasnt started yet\n', status)
+        return
     }
     else if (!g_game.checkSnakeExists(snakeId)) {
-        res.send('This snakeId does not exist')
-        if (Verbose) { console.log('Failed, this snake Id does not exist\n') }
+        let status = 400
+        res.status(status).send('This snakeId does not exist')
+        logif(verbose, 'Failed, this snake Id does not exist\n', status)
+        return
     }
     else {
         let state = g_game.getState(snakeId)
         res.json(state)
-
-        // TODO: лучше это логирование убрать в интервал, где stеp делается
-        // TODO: хорошо бы логировать номер state-а, который мы отдали клиенту
-        if (Verbose) {
-            console.log(`--- Game STATE for snake ${snakeId} ---\n`)
-            if (state.snakes[snakeId].length == 0 && state.isStart) { console.log('Game over\n'); return }
-            if (!state.isStart) { console.log('Game hasnt started yet\n'); return }
-            if (state.isFinish && state.winnerId == snakeId) { console.log('Game is won\n'); return }
-            if (state.isStart && !state.isFinish) {
-                console.log('Game started')
-                console.log(`Score = ${state.cntFoodEaten[snakeId]}`)
-                showField(state)
-            }
-        }
+        logif(verbose, `Success, state of snake ${snakeId}:\n ${JSON.stringify(state)}`)
     }
 })
 
 app.post('/direction/:id', (req, res) => {
     let snakeId = parseInt(req.params.id, 10)
-    if (Verbose) { console.log(`Trying to set direction for snake  ${snakeId}: `) }
+    if (verbose) { console.log(`Trying to set direction for snake  ${snakeId}: `) }
     if (!g_game.checkSnakeExists(snakeId)) {
-        res.send('This snakeId does not exist')
-        if (Verbose) { console.log('Failed, this snakeId does not exist\n') }
+        let status = 400
+        res.status(status).send('This snakeId does not exist')
+        logif(verbose, 'Failed, this snakeId does not exist\n', status)
     }
     else {
         let dir = req.body.dir
-        if (!(dir in directions)) {
-            res.send('wrong direction')
-            if (Verbose) { console.log('Failed, this directions is incorrect\n') }
+        if (!(Object.values(directions).includes(dir))) {
+            let status = 400
+            res.status(status).send('wrong direction')
+            logif(verbose, 'Failed, this directions is incorrect\n', status)
         }
         else {
             g_game.setDir(snakeId, dir)
             res.send('got direction')
-            if (Verbose) { console.log(`Success, direction ${directions[dir]} for snake ${snakeId} setted\n`) }
+            logif(verbose, `Success, direction ${dir} for snake ${snakeId} setted\n`)
         }
     }
 })
@@ -130,14 +127,28 @@ function startInterval() {
             clearInterval(g_intervalId);
             return;
         }
-        g_timeDelay += delay
-        if (g_timeDelay >= timeMove) {
+        g_timeDelay += g_delay
+        if (g_timeDelay >= g_timeMove) {
             g_timeDelay = 0
             g_game.step()
+            let state = g_game.getState(0)
+            let stateNumber = g_game.add_stateNumber()
+            showState(state, stateNumber)
         }
-    }, delay)
+    }, g_delay)
 }
 
+function showState(state, n = 0) {
+    if (verbose) {
+        console.log(`--- Game STATE № ${n} ---\n`)
+        if (!state.isStart) { console.log('Game hasnt started yet\n'); return }
+        if (state.isFinish) { console.log(`Game is finished, winner id = ${state.winnerId}\n`); return }
+        if (state.isStart && !state.isFinish) {
+            console.log('Game started')
+            showField(state)
+        }
+    }
+}
 
 function showField(state) {
     let [w, h] = g_game.get_fieldSizesWH()
