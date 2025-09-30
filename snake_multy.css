@@ -1,0 +1,128 @@
+body {
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    background-color: black;
+}
+
+.field {
+    height: 100vh;
+    background-color: rgba(110, 21, 21, 0.849);
+
+}
+
+.cell {
+    position: absolute;
+    background-color: #24bb33d3;
+    border: 1px dotted #409e4795;
+}
+
+.snake {
+    background-color: #4c72dbc2;
+}
+
+.snake-tail {
+    background-color: #4c72dbc2;
+}
+
+.snake-head {
+    background-color: #2b2ed5da;
+}
+
+.food {
+    background-color: #9f2020da;
+}
+
+.score {
+    position: absolute;
+    background-color: #8d28c4da;
+    border: 1px dotted #8d28c4da;
+    border-radius: 5%;
+    opacity: 50%;
+    align-content: center;
+    text-align: center;
+    font-family: Arial;
+    font-size: 20px;
+    font-weight: bold;
+    color: rgb(6, 19, 122);
+}
+
+.menu {
+    position: absolute;
+    background-color: #bd65b8;
+    border: 2px solid #80367b;
+    border-radius: 5%;
+    text-align: center;
+    font-family: Arial;
+    font-weight: bold;
+    font-size: 20px;
+    box-shadow: 5px 5px 5px #00000095;
+}
+
+.waiting {
+    position: absolute;
+    background-color: #bd65b8;
+    border: 2px solid #80367b;
+    border-radius: 5%;
+    width: 100px;
+    height: 50px;
+    text-align: center;
+    font-family: Arial;
+    font-weight: bold;
+    font-size: 20px;
+    box-shadow: 5px 5px 5px #00000095;
+}
+
+.menu-header {
+    text-align: center;
+    margin-top: 5%;
+    color: #09620eda;
+    font-size: 22px;
+}
+
+.setting {
+    display: grid;
+    grid-template-columns: 3fr 1fr 0.5fr;
+    text-align: left;
+    align-items: center;
+    height: 15%;
+    margin-top: 5%;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding-left: 5%;
+    color: #0a6e0fda;
+}
+
+.refresh-button {
+    background-color: #0b8711da;
+    width: 5px;
+    height: 5px;
+}
+
+.create-button {
+    background-color: #0b8711da;
+    width: 180px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.start-button {
+    background-color: #0b8711da;
+    width: 120px;
+    height: 40px;
+    font-size: 22px;
+}
+
+.material-symbols-outlined {
+    background-color: #0b8711da;
+}
+
+.edit {
+    height: 20px;
+    width: 150px;
+    text-align: center;
+    background-color: #be6cba;
+    font-size: 16px;
+    color: black;
+    border: 1px solid black;
+}

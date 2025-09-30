@@ -38,8 +38,16 @@ app.post('/init', (req, res) => {
     clearInterval(g_intervalId)
     g_config = new snake.Game.Config(req.body.limitConnections)
     g_game = null
-    res.send('Game inited')
+    res.json({GameInited: true})
     logif(verbose, '--- GAME INITED ---\n')
+})
+
+app.get('/count', (_, res) => {
+    res.json({countSnakes: g_config.get_cntConnections()})
+})
+
+app.get('/limit', (_, res) => {
+    res.json({limitSnakes: g_config.get_limitSnake()})
 })
 
 app.post('/connect', (_, res) => {
