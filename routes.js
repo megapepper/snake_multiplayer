@@ -1,5 +1,11 @@
 import * as snake from './snake.cjs'
 import express from 'express'
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const args = process.argv;
 
@@ -27,8 +33,31 @@ function logif(verbose, str, status = 0) {
 
 
 app.use(express.json())
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.listen(port, () => { logif(verbose, `App listening on port ${port}\n`) })
 
+// https:// -> http:// ???
+
+
+app.get('/ui/', (req, res) => {
+    if (req.url.charAt(req.url.length - 1) == '/') {
+        res.sendFile(__dirname + '/' + './snake_multy.html');
+    } else {
+        console.log('redirecting...')
+        res.redirect('/ui/');
+    }
+});
+
+app.get('/ui/snake_multy.css', (req, res) => {
+    res
+        .sendFile(__dirname + '/' + './snake_multy.css');
+});
+
+app.get('/ui/snake_multy.js', (req, res) => {
+    res
+        .sendFile(__dirname + '/' + './snake_multy.js');
+});
 
 app.get('/ping', (_, res) => {
     res.send('OK')
@@ -38,16 +67,22 @@ app.post('/init', (req, res) => {
     clearInterval(g_intervalId)
     g_config = new snake.Game.Config(req.body.limitConnections)
     g_game = null
-    res.json({GameInited: true})
+    res.json({ GameInited: true })
     logif(verbose, '--- GAME INITED ---\n')
 })
 
 app.get('/count', (_, res) => {
-    res.json({countSnakes: g_config.get_cntConnections()})
+    res.json({ countSnakes: g_config.get_cntConnections() })
 })
 
 app.get('/limit', (_, res) => {
-    res.json({limitSnakes: g_config.get_limitSnake()})
+    res.json({ limitSnakes: g_config.get_limitSnake() })
+})
+
+app.get('/check_start', (_, res) => {
+    let isStarted = false
+    if (g_game !== null && g_game.get_isStart()) { isStarted = true }
+    res.json({ isStarted: isStarted })
 })
 
 app.post('/connect', (_, res) => {

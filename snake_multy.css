@@ -59,7 +59,7 @@ body {
     box-shadow: 5px 5px 5px #00000095;
 }
 
-.waiting {
+.waiting-snakes {
     position: absolute;
     background-color: #bd65b8;
     border: 2px solid #80367b;
@@ -71,6 +71,21 @@ body {
     font-weight: bold;
     font-size: 20px;
     box-shadow: 5px 5px 5px #00000095;
+}
+
+.waiting-start {
+    position: absolute;
+    background-color: #bd65b8;
+    border: 2px solid #80367b;
+    border-radius: 5%;
+    width: 100px;
+    height: 20px;
+    text-align: center;
+    font-family: Arial;
+    font-weight: bold;
+    font-size: 20px;
+    box-shadow: 5px 5px 5px #00000095;
+    visibility: hidden
 }
 
 .menu-header {
@@ -101,9 +116,18 @@ body {
 
 .create-button {
     background-color: #0b8711da;
-    width: 180px;
+    width: 170px;
     height: 40px;
     font-size: 22px;
+    margin: 2%;
+}
+
+.connect-button {
+    background-color: #0b8711da;
+    width: 170px;
+    height: 40px;
+    font-size: 22px;
+    margin: 2%;
 }
 
 .start-button {
@@ -111,11 +135,9 @@ body {
     width: 120px;
     height: 40px;
     font-size: 22px;
+    margin: 10%;
 }
 
-.material-symbols-outlined {
-    background-color: #0b8711da;
-}
 
 .edit {
     height: 20px;
