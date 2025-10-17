@@ -16,11 +16,11 @@ class Game {
     #stateNumber
 
     constructor(config) {
-        this.#FIELD_WIDTH = 16
-        this.#FIELD_HEIGHT = 12
         this.#DIR = Object.freeze({ 'LEFT': 'LEFT', 'UP': 'UP', 'RIGHT': 'RIGHT', 'DOWN': 'DOWN' })
 
-        this.#initCntFood = 3
+        this.#initCntFood = config.get_cntInitFood()
+        this.#FIELD_WIDTH = config.get_fieldSizesWH()[0]
+        this.#FIELD_HEIGHT = config.get_fieldSizesWH()[1]
 
         this.#snakes = []
         this.#food = []
@@ -38,9 +38,18 @@ class Game {
 
     static Config = class {
         #limitSnakes
+        #FIELD_WIDTH
+        #FIELD_HEIGHT
+        #initCntFood
+
         constructor(limitSnakes) {
             this.#limitSnakes = limitSnakes
             this.cntConnections = 0
+
+            this.#FIELD_WIDTH = 16
+            this.#FIELD_HEIGHT = 12
+
+            this.#initCntFood = 3
         }
 
         add_connection() {
@@ -52,22 +61,25 @@ class Game {
             return this.cntConnections
         }
 
+        get_cntInitFood() {
+            return this.#initCntFood
+        }
+
         get_limitSnake() {
             return this.#limitSnakes
         }
+
+        get_fieldSizesWH() {
+            return [this.#FIELD_WIDTH, this.#FIELD_HEIGHT]
+        }
     }
 
-    // TODO: (optional) - попробовать убрать (сделать private) все функции, которые не нужны в routes.js
     set_snakes(snakes) {
         this.#snakes = snakes
     }
 
     set_food(food) {
         this.#food = food
-    }
-
-    get_fieldSizesWH() {
-        return [this.#FIELD_WIDTH, this.#FIELD_HEIGHT]
     }
 
     get_isStart() {
@@ -80,7 +92,8 @@ class Game {
 
     getState(snakeId) {
         return {
-            isStart: this.#isStart, isFinish: this.#isFinish, snakes: this.#snakes, food: this.#food, cntFoodEaten: this.#cntFoodEaten,
+            isStart: this.#isStart, isFinish: this.#isFinish,
+            snakes: this.#snakes, food: this.#food, cntFoodEaten: this.#cntFoodEaten,
             cntConnections: this.#cntConnections, snakeId: snakeId, winnerId: this.#winnerId
         }
     }

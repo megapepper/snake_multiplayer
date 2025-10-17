@@ -72,11 +72,16 @@ app.post('/init', (req, res) => {
 })
 
 app.get('/count', (_, res) => {
-    res.json({ countSnakes: g_config.get_cntConnections() })
+    if (g_config == null) res.json({ limitSnakes: 0 })
+    else (res.json({ countSnakes: g_config.get_cntConnections() }))
 })
 
 app.get('/limit', (_, res) => {
     res.json({ limitSnakes: g_config.get_limitSnake() })
+})
+
+app.get('/size', (_, res) => {
+    res.json({ width: g_config.get_fieldSizesWH()[0], height: g_config.get_fieldSizesWH()[1] })
 })
 
 app.get('/check_start', (_, res) => {
@@ -121,7 +126,7 @@ app.get('/state/:id', (req, res) => {
         logif(verbose, 'Only integer snake id is allowed', status)
         return
     }
-    logif(verbose, `Trying to get game state for snake  ${snakeId}: `)
+    logif(verbose, `Trying to get game state for snake ${snakeId}: `)
     if (g_game == null || !g_game.get_isStart()) {
         let status = 400
         res.status(status).send('Game hasnt started yet')
@@ -194,7 +199,7 @@ function showState(state, n = 0) {
 }
 
 function showField(state) {
-    let [w, h] = g_game.get_fieldSizesWH()
+    let [w, h] = g_config.get_fieldSizesWH()
     console.log('Field state: ')
     let field = []
     for (let i = 0; i < h; i++) {

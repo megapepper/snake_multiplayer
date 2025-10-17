@@ -15,9 +15,11 @@ let cols = Math.floor(w / cellSize);
 let limitSnakes = 2
 let serverAddress = 'http://localhost:8080'
 
-let delay = 50
+let delay = 200
 let intervalIdSnakesCount
 let intervalIdGameStarted
+let intervalIdGameStep
+let snakeId = 0
 
 const margin_side = Math.floor((w - cellSize * cols) / 2);
 const margin_top = Math.floor((h - cellSize * rows) / 2);
@@ -85,9 +87,9 @@ function initMenu() {
     menu.appendChild(connectButton);
 }
 
-function connectButtonClick() {
+async function connectButtonClick() {
     serverAddress = document.getElementById('server-address').value
-    fetch(`${serverAddress}/connect`, {
+    let snakeIdStr = await fetch(`${serverAddress}/connect`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -95,10 +97,12 @@ function connectButtonClick() {
         }
     })
         .then(response => response.json())
-        .then(response => console.log(JSON.stringify(response)))
+        .then(response => response.snakeId)
+    snakeId = parseInt(snakeIdStr)
 
     let menu = document.getElementsByClassName('menu')[0];
     menu.style.visibility = 'hidden';
+    initField()
     waitingStart()
 }
 
@@ -147,6 +151,88 @@ function waitingSnakes() {
     }, delay)
 }
 
+function step() {
+
+}
+
+async function initField() {
+    let sizes = await fetch(`${serverAddress}/size`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+    rows = sizes.height
+    cols = sizes.width
+    let field = document.getElementsByClassName('field')[0];
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.style.top = `${i * cellSize}px`;
+            cell.style.left = `${j * cellSize}px`;
+            cell.style.height = `${cellSize}px`;
+            cell.style.width = `${cellSize}px`;
+            cell.style.marginLeft = `${margin_side}px`;
+            cell.style.marginRight = `${margin_side}px`;
+            cell.style.marginTop = `${margin_top}px`;
+            cell.style.marginBottom = `${margin_top}px`;
+            field.appendChild(cell);
+        }
+    }
+}
+
+async function drowField() {
+    let state = await fetch(`${serverAddress}/state/0`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+
+    let cells = document.getElementsByClassName('cell');
+
+    for (const cell of cells) {
+        cell.classList = ''
+        cell.classList.add('cell')
+    }
+
+    for (const snake of state.snakes) {
+        for (const coords of snake) {
+            let cells_number = cols * coords[0] + coords[1]
+            cells[cells_number].classList.add('snake')
+        }
+    }
+
+    for (const food of state.food) {
+        cells[food].classList.add('food')
+    }
+}
+
+async function checkFinish() {
+    let state = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+    console.log('snake Id ', snakeId, state)
+}
+
+function startGame() {
+    console.log('START!!!')
+    intervalIdGameStep = setInterval(() => {
+        drowField()
+        checkFinish()
+    }, delay)
+}
+
 async function refreshGameStarted() {
     let isStarted = await fetch(`${serverAddress}/check_start`, {
         method: 'GET',
@@ -157,11 +243,11 @@ async function refreshGameStarted() {
     })
         .then(response => response.json())
         .then(response => response.isStarted)
-    console.log(isStarted)
     if (isStarted) {
-        console.log(isStarted)
-        let menu = document.getElementsByClassName('waiting-start')[0];
-        menu.style.visibility = 'hidden';
+        let menu = document.getElementsByClassName('waiting-start')[0]
+        menu.style.visibility = 'hidden'
+        clearInterval(intervalIdGameStarted)
+        startGame()
     }
 }
 
@@ -186,10 +272,10 @@ function waitingStart() {
 }
 
 function initGame() {
-    initMenu();
+    initMenu()
 }
 
-function createButtonClick() {
+async function createButtonClick() {
     serverAddress = document.getElementById('server-address').value
     limitSnakes = document.getElementById('limite-snake').value
 
@@ -204,16 +290,31 @@ function createButtonClick() {
         .then(response => response.json())
         .then(response => console.log(JSON.stringify(response)))
 
-    let menu = document.getElementsByClassName('menu')[0];
-    menu.style.visibility = 'hidden';
+    let menu = document.getElementsByClassName('menu')[0]
+    menu.style.visibility = 'hidden'
+
+    serverAddress = document.getElementById('server-address').value
+    let snakeIdStr = await fetch(`${serverAddress}/connect`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(response => response.snakeId)
+    snakeId = parseInt(snakeIdStr)
+    initField()
     waitingSnakes()
 }
 
 function startButtonClick() {
-    let waiting_start = document.getElementsByClassName('waiting-start')[0];
-    waiting_start.style.visibility = 'hidden';
-    let waiting_snakes = document.getElementsByClassName('waiting-snakes')[0];
-    waiting_snakes.style.visibility = 'hidden';
+    let waiting_start = document.getElementsByClassName('waiting-start')[0]
+    waiting_start.style.visibility = 'hidden'
+    let waiting_snakes = document.getElementsByClassName('waiting-snakes')[0]
+    waiting_snakes.style.visibility = 'hidden'
+
+    clearInterval(intervalIdSnakesCount)
 
     fetch(`${serverAddress}/start`, {
         method: 'POST',
@@ -222,10 +323,7 @@ function startButtonClick() {
             'Content-Type': 'application/json'
         }
     })
-    console.log('START')
+    startGame()
 }
 
-function settings() {
-    window.location.reload();
-}
 
