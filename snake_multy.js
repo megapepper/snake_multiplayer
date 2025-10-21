@@ -1,10 +1,16 @@
 window.onload = function () {
     initGame();
-};
+}
+
+document.onkeydown = keyBar
+
+const LEFT = 37;
+const UP = 38;
+const RIGHT = 39;
+const DOWN = 40;
+const directions = { 37: 'LEFT', 38: 'UP', 39: 'RIGHT', 40: 'DOWN' }
 
 const cellSize = 50;
-const SPACE = 32;
-const SETTINGS = 83;
 const w = window.innerWidth;
 const h = window.innerHeight;
 const wMenu = 400;
@@ -15,11 +21,13 @@ let cols = Math.floor(w / cellSize);
 let limitSnakes = 2
 let serverAddress = 'http://localhost:8080'
 
-let delay = 200
+let delay = 10
 let intervalIdSnakesCount
 let intervalIdGameStarted
 let intervalIdGameStep
 let snakeId = 0
+let prevKeyCode = RIGHT
+let keyCode = null
 
 const margin_side = Math.floor((w - cellSize * cols) / 2);
 const margin_top = Math.floor((h - cellSize * rows) / 2);
@@ -213,6 +221,32 @@ async function drowField() {
     }
 }
 
+async function showLoss() {
+    let state = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+    alert(`You lost! Your earned ${state.cntFoodEaten[snakeId]} points. Let's play again?`);
+    location.reload();
+}
+
+async function showWin() {
+    let state = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+    alert(`You won! Your earned ${state.cntFoodEaten[snakeId]} points. Let's play again?`);
+    location.reload();
+}
+
 async function checkFinish() {
     let state = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
         method: 'GET',
@@ -222,11 +256,18 @@ async function checkFinish() {
         }
     })
         .then(response => response.json())
-    console.log('snake Id ', snakeId, state)
+
+    if (state.isFinish) {
+        if (parseInt(state.winnerId) == snakeId) {
+            showWin()
+        }
+        else {
+            showLoss()
+        }
+    }
 }
 
 function startGame() {
-    console.log('START!!!')
     intervalIdGameStep = setInterval(() => {
         drowField()
         checkFinish()
@@ -326,4 +367,26 @@ function startButtonClick() {
     startGame()
 }
 
+function setDirection(dir) {
+    fetch(`${serverAddress}/direction/${snakeId}`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ "dir": directions[dir] })
+    })
+        .then(response => response.json())
+    prevKeyCode = dir
+}
 
+function keyBar(e) {
+    e = e || window.Event;
+    if ([RIGHT, LEFT, UP, DOWN].includes(e.keyCode)) {
+        if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
+            e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
+            keyCode = e.keyCode;
+        }
+        setDirection(keyCode)
+    }
+}

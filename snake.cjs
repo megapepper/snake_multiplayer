@@ -214,7 +214,7 @@ class Game {
                 this.#snakes[id].unshift([head_row, head_col + 1 >= this.#FIELD_WIDTH ? 0 : head_col + 1])
                 break
             case this.#DIR['LEFT']:
-                this.#snakes[idn].unshift([head_row, head_col - 1 < 0 ? this.#FIELD_WIDTH - 1 : head_col - 1])
+                this.#snakes[id].unshift([head_row, head_col - 1 < 0 ? this.#FIELD_WIDTH - 1 : head_col - 1])
                 break
             case this.#DIR['UP']:
                 this.#snakes[id].unshift([head_row - 1 < 0 ? this.#FIELD_HEIGHT - 1 : head_row - 1, head_col])

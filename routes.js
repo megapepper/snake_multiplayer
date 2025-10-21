@@ -13,6 +13,7 @@ const verbose = args.includes('--verbose');
 
 const app = express()
 const port = 8080
+const host = "0.0.0.0"
 
 const g_timeMove = 400
 const g_delay = 50
@@ -35,7 +36,7 @@ function logif(verbose, str, status = 0) {
 app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.listen(port, () => { logif(verbose, `App listening on port ${port}\n`) })
+app.listen(port, host, () => { logif(verbose, `App listening on port ${port}\n`) })
 
 // https:// -> http:// ???
 
