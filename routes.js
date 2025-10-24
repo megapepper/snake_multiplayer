@@ -15,7 +15,7 @@ const app = express()
 const port = 8080
 const host = "0.0.0.0"
 
-const g_timeMove = 400
+const g_timeMove = 300
 const g_delay = 50
 
 const directions = { LEFT: 'LEFT', UP: 'UP', RIGHT: 'RIGHT', DOWN: 'DOWN' }

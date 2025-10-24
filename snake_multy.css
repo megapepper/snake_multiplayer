@@ -2,12 +2,13 @@ body {
     height: 100vh;
     padding: 0;
     margin: 0;
-    background-color: black;
+    background-color: #6e1515c3;
 }
 
 .field {
-    height: 100vh;
-    background-color: rgba(110, 21, 21, 0.849);
+    position: absolute;
+    background-color: #6e1515d8;
+    border-color: black;
 
 }
 
@@ -18,15 +19,19 @@ body {
 }
 
 .snake {
-    background-color: #4c72dbc2;
-}
-
-.snake-tail {
-    background-color: #4c72dbc2;
+    background-color: #1f23ff;
 }
 
 .snake-head {
-    background-color: #2b2ed5da;
+    background-color: #191cd1;
+}
+
+.own-snake {
+    background-color: #1b1eb0;
+}
+
+.own-snake-head {
+    background-color: rgb(13, 14, 115);
 }
 
 .food {
