@@ -105,7 +105,7 @@ body {
     grid-template-columns: 3fr 1fr 0.5fr;
     text-align: left;
     align-items: center;
-    height: 15%;
+    height: 8%;
     margin-top: 5%;
     margin-left: 5%;
     margin-right: 5%;
@@ -113,11 +113,7 @@ body {
     color: #0a6e0fda;
 }
 
-.refresh-button {
-    background-color: #0b8711da;
-    width: 5px;
-    height: 5px;
-}
+
 
 .create-button {
     background-color: #0b8711da;
@@ -125,6 +121,7 @@ body {
     height: 40px;
     font-size: 22px;
     margin: 2%;
+    margin-top: 4%;
 }
 
 .connect-button {
@@ -133,6 +130,7 @@ body {
     height: 40px;
     font-size: 22px;
     margin: 2%;
+    margin-top: 4%;
 }
 
 .start-button {

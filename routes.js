@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const args = process.argv;
 
 const verbose = args.includes('--verbose');
@@ -14,9 +13,6 @@ const verbose = args.includes('--verbose');
 const app = express()
 const port = 8080
 const host = "0.0.0.0"
-
-const g_timeMove = 300
-const g_delay = 50
 
 const directions = { LEFT: 'LEFT', UP: 'UP', RIGHT: 'RIGHT', DOWN: 'DOWN' }
 
@@ -37,9 +33,6 @@ app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(port, host, () => { logif(verbose, `App listening on port ${port}\n`) })
-
-// https:// -> http:// ???
-
 
 app.get('/ui/', (req, res) => {
     if (req.url.charAt(req.url.length - 1) == '/') {
@@ -66,7 +59,7 @@ app.get('/ping', (_, res) => {
 
 app.post('/init', (req, res) => {
     clearInterval(g_intervalId)
-    g_config = new snake.Game.Config(req.body.limitConnections)
+    g_config = new snake.Game.Config(req.body.limitConnections, req.body.speed, req.body.width, req.body.height)
     g_game = null
     res.json({ GameInited: true })
     logif(verbose, '--- GAME INITED ---\n')
@@ -82,13 +75,22 @@ app.get('/limit', (_, res) => {
 })
 
 app.get('/size', (_, res) => {
-    res.json({ width: g_config.get_fieldSizesWH()[0], height: g_config.get_fieldSizesWH()[1] })
+    res.json({ width: g_config.get_fieldSizeW(), height: g_config.get_fieldSizeH() })
 })
 
 app.get('/check_start', (_, res) => {
     let isStarted = false
     if (g_game !== null && g_game.get_isStart()) { isStarted = true }
     res.json({ isStarted: isStarted })
+})
+
+app.get('/time_move', (_, res) => {
+    res.json({ timeMove: g_game.get_timesMoving()[1] })
+})
+
+app.get('/direction/:id', (req, res) => {
+    let snakeId = parseInt(req.params.id, 10)
+    res.json({ dir: g_game.getDir(snakeId)})
 })
 
 app.post('/connect', (_, res) => {
@@ -171,20 +173,21 @@ app.post('/direction/:id', (req, res) => {
 })
 
 function startInterval() {
+    let [delay, timeMove] = g_game.get_timesMoving()
     g_intervalId = setInterval(() => {
         if (g_game.get_isFinish()) {
             clearInterval(g_intervalId);
             return;
         }
-        g_timeDelay += g_delay
-        if (g_timeDelay >= g_timeMove) {
+        g_timeDelay += delay
+        if (g_timeDelay >= timeMove) {
             g_timeDelay = 0
             g_game.step()
             let state = g_game.getState(0)
             let stateNumber = g_game.add_stateNumber()
             showState(state, stateNumber)
         }
-    }, g_delay)
+    }, delay)
 }
 
 function showState(state, n = 0) {
@@ -200,7 +203,8 @@ function showState(state, n = 0) {
 }
 
 function showField(state) {
-    let [w, h] = g_config.get_fieldSizesWH()
+    let w = g_config.get_fieldSizeW()
+    let h = g_config.get_fieldSizeH()
     console.log('Field state: ')
     let field = []
     for (let i = 0; i < h; i++) {

@@ -14,13 +14,15 @@ class Game {
     #cntConnections
     #winnerId
     #stateNumber
+    #delayMove
+    #timeMove
 
     constructor(config) {
         this.#DIR = Object.freeze({ 'LEFT': 'LEFT', 'UP': 'UP', 'RIGHT': 'RIGHT', 'DOWN': 'DOWN' })
 
         this.#initCntFood = config.get_cntInitFood()
-        this.#FIELD_WIDTH = config.get_fieldSizesWH()[0]
-        this.#FIELD_HEIGHT = config.get_fieldSizesWH()[1]
+        this.#FIELD_WIDTH = config.get_fieldSizeW()
+        this.#FIELD_HEIGHT = config.get_fieldSizeH()
 
         this.#snakes = []
         this.#food = []
@@ -32,6 +34,10 @@ class Game {
         this.#cntConnections = config.get_cntConnections()
         this.#winnerId = -1
         this.#stateNumber = 0
+        this.#delayMove = config.get_timesMoving()[0]
+        this.#timeMove = config.get_timesMoving()[1]
+
+
         this.#initSnakes()
         this.#initFood()
     }
@@ -41,15 +47,22 @@ class Game {
         #FIELD_WIDTH
         #FIELD_HEIGHT
         #initCntFood
+        #delayMove
+        #maxDelayMove
+        #timeMove
 
-        constructor(limitSnakes) {
+        constructor(limitSnakes, speed, w, h) {
             this.#limitSnakes = limitSnakes
             this.cntConnections = 0
 
-            this.#FIELD_WIDTH = 16
-            this.#FIELD_HEIGHT = 12
+            this.#FIELD_WIDTH = w
+            this.#FIELD_HEIGHT = h
 
             this.#initCntFood = 3
+
+            this.#delayMove = 50
+            this.#maxDelayMove = 450
+            this.#timeMove = Math.max(this.#delayMove, this.#maxDelayMove - this.#delayMove * speed)
         }
 
         add_connection() {
@@ -69,9 +82,20 @@ class Game {
             return this.#limitSnakes
         }
 
-        get_fieldSizesWH() {
-            return [this.#FIELD_WIDTH, this.#FIELD_HEIGHT]
+        get_fieldSizeW() {
+            return this.#FIELD_WIDTH
         }
+        get_fieldSizeH() {
+            return this.#FIELD_HEIGHT
+        }
+
+        get_timesMoving() {
+            return [this.#delayMove, this.#timeMove]
+        }
+    }
+
+    get_timesMoving() {
+        return [this.#delayMove, this.#timeMove]
     }
 
     set_snakes(snakes) {
@@ -107,6 +131,10 @@ class Game {
                 this.#directions[snakeId] = dir
             }
         }
+    }
+
+    getDir(snakeId) {
+        return this.#directions[snakeId]
     }
 
     step() {
@@ -229,10 +257,14 @@ class Game {
         let snake1 = this.#snakes[id].map(x => { return x[0] * this.#FIELD_WIDTH + x[1] })
         let head_pos = snake1[0]
         for (let i = 0; i < this.#cntConnections; i++) {
-            if (i == id || this.#snakes[i] == []) continue
-            let snake2 = this.#snakes[i].map(x => { return x[0] * this.#FIELD_WIDTH + x[1] })
-            if (snake2.slice(1).includes(head_pos)) return true
-            if (snake2[0] == head_pos) { return (snake1.length <= snake2.length) }
+            if (i == id || this.#snakes[i] == []) {
+                if (snake1.slice(1).includes(head_pos)) return true
+            }
+            else {
+                let snake2 = this.#snakes[i].map(x => { return x[0] * this.#FIELD_WIDTH + x[1] })
+                if (snake2.slice(1).includes(head_pos)) return true
+                if (snake2[0] == head_pos) { return (snake1.length <= snake2.length) }
+            }
         }
         return false
     }

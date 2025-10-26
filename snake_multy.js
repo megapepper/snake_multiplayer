@@ -1,5 +1,5 @@
 window.onload = function () {
-    initGame()
+    initial()
 }
 
 document.onkeydown = keyBar
@@ -14,14 +14,17 @@ const cellSize = 50
 const w = window.innerWidth
 const h = window.innerHeight
 const wMenu = 400
-const hMenu = 220
+const hMenu = 320
 
-let rows
-let cols
+let rows = 12
+let cols = 16
 let limitSnakes = 2
 let serverAddress = window.location.origin
 
-let delay = 100
+let refreshDelay = 50
+let moveDalay = 50
+let moveTime = 400
+let speed = 4
 let intervalIdSnakesCount
 let intervalIdGameStarted
 let intervalIdGameStep
@@ -29,13 +32,13 @@ let snakeId = 0
 let prevKeyCode = RIGHT
 let keyCode = RIGHT
 
-const margin_side = Math.floor((w - cellSize * cols) / 2)
-const margin_top = Math.floor((h - cellSize * rows) / 2)
+const margin_side = 0//Math.floor((w - cellSize * cols) / 2)
+const margin_top = 0//Math.floor((h - cellSize * rows) / 2)
 
 function initSnakeLimit() {
     let setting = document.createElement('div')
     setting.className = 'setting'
-    setName = document.createElement('div')
+    let setName = document.createElement('div')
     setName.textContent = 'Snake limit: '
     let edit = document.createElement('input')
     edit.id = 'limite-snake'
@@ -44,6 +47,57 @@ function initSnakeLimit() {
     edit.min = '1'
     edit.max = '5'
     edit.value = limitSnakes
+    setting.appendChild(setName)
+    setting.appendChild(edit)
+    return setting
+}
+
+function initSpeed() {
+    let setting = document.createElement('div')
+    setting.className = 'setting'
+    let setName = document.createElement('div')
+    setName.textContent = 'Speed: '
+    let edit = document.createElement('input')
+    edit.id = 'speed-snake'
+    edit.className = 'edit'
+    edit.type = 'number'
+    edit.min = '1'
+    edit.max = '5'
+    edit.value = speed
+    setting.appendChild(setName)
+    setting.appendChild(edit)
+    return setting
+}
+
+function initRowCount() {
+    let setting = document.createElement('div')
+    setting.className = 'setting'
+    let setName = document.createElement('div')
+    setName.textContent = 'Row count: '
+    let edit = document.createElement('input')
+    edit.id = 'row-count'
+    edit.className = 'edit'
+    edit.type = 'number'
+    edit.min = '10'
+    edit.max = '20'
+    edit.value = rows
+    setting.appendChild(setName)
+    setting.appendChild(edit)
+    return setting
+}
+
+function initColumnCount() {
+    let setting = document.createElement('div')
+    setting.className = 'setting'
+    let setName = document.createElement('div')
+    setName.textContent = 'Column count: '
+    let edit = document.createElement('input')
+    edit.id = 'col-count'
+    edit.className = 'edit'
+    edit.type = 'number'
+    edit.min = '10'
+    edit.max = '20'
+    edit.value = cols
     setting.appendChild(setName)
     setting.appendChild(edit)
     return setting
@@ -74,16 +128,26 @@ function initMenu() {
     menu.style.visibility = 'visible'
 
     menu.appendChild(initSnakeLimit())
+    menu.appendChild(initSpeed())
+    menu.appendChild(initRowCount())
+    menu.appendChild(initColumnCount())
     menu.appendChild(initCreateButton())
     menu.appendChild(initConnectButton())
 
+    initWaitingStart()
+    initWaitingSnakes()
+}
+
+function initWaitingStart() {
     let waiting_start = document.getElementsByClassName('waiting-start')[0]
     waiting_start.style.top = `${h / 2 - hMenu / 2}px`
     waiting_start.style.left = `${w / 2 - wMenu / 2}px`
     waiting_start.style.height = `${hMenu / 2}px`
     waiting_start.style.width = `${wMenu}px`
     waiting_start.style.visibility = 'hidden'
+}
 
+function initWaitingSnakes() {
     let waiting_snake = document.getElementsByClassName('waiting-snakes')[0]
     waiting_snake.style.top = `${h / 2 - hMenu / 2}px`
     waiting_snake.style.left = `${w / 2 - wMenu / 2}px`
@@ -91,7 +155,7 @@ function initMenu() {
     waiting_snake.style.width = `${wMenu}px`
     waiting_snake.style.visibility = 'hidden'
 
-    setting = document.createElement('div')
+    let setting = document.createElement('div')
     setting.className = 'setting'
     setName = document.createElement('div')
     setName.textContent = 'Count of snakes: '
@@ -99,10 +163,20 @@ function initMenu() {
     edit.id = 'count-snake'
     edit.className = 'edit'
     edit.type = 'number'
+
+    edit.innerHTML = '0'
+    setting.appendChild(setName)
+    setting.appendChild(edit)
+    waiting_snake.appendChild(setting)
+
+    let startButton = document.createElement('button')
+    startButton.className = 'start-button'
+    startButton.textContent = 'Start'
+    startButton.addEventListener('click', startButtonClick)
+    waiting_snake.appendChild(startButton)
 }
 
 async function connectButtonClick() {
-    //serverAddress = document.getElementById('server-address').value
     let snakeIdStr = await fetch(`${serverAddress}/connect`, {
         method: 'POST',
         headers: {
@@ -139,41 +213,12 @@ function waitingSnakes() {
     let menu = document.getElementsByClassName('waiting-snakes')[0]
     menu.style.visibility = 'visible'
 
-    let setting = document.createElement('div')
-    setting.className = 'setting'
-    setName = document.createElement('div')
-    setName.textContent = 'Count of snakes: '
-    let edit = document.createElement('div')
-    edit.id = 'count-snake'
-    edit.className = 'edit'
-    edit.type = 'number'
-    edit.innerHTML = '0'
-    setting.appendChild(setName)
-    setting.appendChild(edit)
-    menu.appendChild(setting)
-
-    let startButton = document.createElement('button')
-    startButton.className = 'start-button'
-    startButton.textContent = 'Start'
-    startButton.addEventListener('click', startButtonClick)
-    menu.appendChild(startButton)
-
     intervalIdSnakesCount = setInterval(() => {
         refreshSnakesCount()
-    }, delay)
+    }, refreshDelay)
 }
 
-async function initField() {
-    let sizes = await fetch(`${serverAddress}/size`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-    rows = sizes.height
-    cols = sizes.width
+function initField() {
     let field = document.getElementsByClassName('field')[0]
     field.style.top = `${(h / 2) - (rows / 2) * cellSize}px`
     field.style.left = `${(w / 2) - (cols / 2) * cellSize}px`
@@ -282,12 +327,22 @@ async function checkFinish() {
     }
 }
 
-function startGame() {
+async function startGame() {
+    moveTime = await fetch(`${serverAddress}/time_move`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(reponse => reponse.timeMove)
+
     intervalIdGameStep = setInterval(() => {
+        setDirection(keyCode)
         drowField()
         checkFinish()
-        setDirection(keyCode)
-    }, delay)
+    }, moveTime)
 }
 
 async function refreshGameStarted() {
@@ -320,29 +375,25 @@ function waitingStart() {
 
     intervalIdGameStarted = setInterval(async () => {
         await refreshGameStarted()
-    }, delay)
+    }, refreshDelay)
 }
 
-function initGame() {
+function initial() {
     initMenu()
 }
 
-async function createButtonClick() {
-    //serverAddress = document.getElementById('server-address').value
-    limitSnakes = document.getElementById('limite-snake').value
-
+function initGame(limitSnakes, speed, width, height) {
     fetch(`${serverAddress}/init`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ "limitConnections": limitSnakes })
+        body: JSON.stringify({ "limitConnections": limitSnakes, "speed": speed, "width": width, "height": height })
     })
+}
 
-    let menu = document.getElementsByClassName('menu')[0]
-    menu.style.visibility = 'hidden'
-
+async function connectGame() {
     let snakeIdStr = await fetch(`${serverAddress}/connect`, {
         method: 'POST',
         headers: {
@@ -352,7 +403,23 @@ async function createButtonClick() {
     })
         .then(response => response.json())
         .then(response => response.snakeId)
+
     snakeId = parseInt(snakeIdStr)
+}
+
+async function createButtonClick() {
+    limitSnakes = document.getElementById('limite-snake').value
+    speed = document.getElementById('speed-snake').value
+
+    rows = document.getElementById('row-count').value
+    cols = document.getElementById('col-count').value
+
+    let menu = document.getElementsByClassName('menu')[0]
+    menu.style.visibility = 'hidden'
+
+    initGame(limitSnakes, speed, cols, rows)
+    connectGame()
+
     initField()
     waitingSnakes()
 }
@@ -384,16 +451,25 @@ function setDirection(dir) {
         },
         body: JSON.stringify({ "dir": directions[dir] })
     })
-    prevKeyCode = dir
 }
 
-function keyBar(e) {
+async function keyBar(e) {
     e = e || window.Event
+
+    prevKeyCode = await fetch(`${serverAddress}/direction/${snakeId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(response => response.dir)
+
     if ([RIGHT, LEFT, UP, DOWN].includes(e.keyCode)) {
         if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
             e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
             keyCode = e.keyCode
-            //setDirection(keyCode)
         }
     }
 }
