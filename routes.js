@@ -3,6 +3,7 @@ import express from 'express'
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -22,7 +23,6 @@ let g_intervalId
 let g_config
 let g_game
 
-
 function logif(verbose, str, status = 0) {
     if (status != 0) console.log(`status code: ${status}`)
     if (verbose) console.log(str)
@@ -30,7 +30,7 @@ function logif(verbose, str, status = 0) {
 
 
 app.use(express.json())
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')))
 
 app.listen(port, host, () => { logif(verbose, `App listening on port ${port}\n`) })
 
@@ -52,6 +52,12 @@ app.get('/ui/snake_multy.js', (req, res) => {
     res
         .sendFile(__dirname + '/' + './snake_multy.js');
 });
+
+app.get('/ui/audio.mp3', (req, res) => {
+    res
+        .sendFile(__dirname + '/' + './audio.mp3');
+});
+
 
 app.get('/ping', (_, res) => {
     res.send('OK')

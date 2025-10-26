@@ -7,6 +7,7 @@ class Game {
     #snakes
     #food
     #directions
+    #lastDirections
     #foodEaten
     #cntFoodEaten
     #isFinish
@@ -27,6 +28,7 @@ class Game {
         this.#snakes = []
         this.#food = []
         this.#directions = []
+        this.#lastDirections = []
         this.#foodEaten = []
         this.#cntFoodEaten = []
         this.#isFinish = false
@@ -124,10 +126,10 @@ class Game {
 
     setDir(snakeId, dir) {
         if ([this.#DIR['RIGHT'], this.#DIR['LEFT'], this.#DIR['UP'], this.#DIR['DOWN']].includes(dir)) {
-            if (dir == this.#DIR['RIGHT'] && this.#directions[snakeId] != this.#DIR['LEFT'] ||
-                dir == this.#DIR['LEFT'] && this.#directions[snakeId] != this.#DIR['RIGHT'] ||
-                dir == this.#DIR['UP'] && this.#directions[snakeId] != this.#DIR['DOWN'] ||
-                dir == this.#DIR['DOWN'] && this.#directions[snakeId] != this.#DIR['UP']) {
+            if (dir == this.#DIR['RIGHT'] && this.#lastDirections[snakeId] != this.#DIR['LEFT'] ||
+                dir == this.#DIR['LEFT'] && this.#lastDirections[snakeId] != this.#DIR['RIGHT'] ||
+                dir == this.#DIR['UP'] && this.#lastDirections[snakeId] != this.#DIR['DOWN'] ||
+                dir == this.#DIR['DOWN'] && this.#lastDirections[snakeId] != this.#DIR['UP']) {
                 this.#directions[snakeId] = dir
             }
         }
@@ -251,6 +253,7 @@ class Game {
                 this.#snakes[id].unshift([head_row + 1 >= this.#FIELD_HEIGHT ? 0 : head_row + 1, head_col])
                 break
         }
+        this.#lastDirections[id] = dir
     }
 
     #isCrashed(id) {

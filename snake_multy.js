@@ -342,7 +342,7 @@ async function startGame() {
         setDirection(keyCode)
         drowField()
         checkFinish()
-    }, moveTime)
+    }, 10)
 }
 
 async function refreshGameStarted() {
@@ -440,6 +440,7 @@ function startButtonClick() {
         }
     })
     startGame()
+    document.getElementById("background-music").play(); 
 }
 
 function setDirection(dir) {
