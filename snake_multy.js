@@ -10,7 +10,6 @@ const RIGHT = 39
 const DOWN = 40
 const directions = { 37: 'LEFT', 38: 'UP', 39: 'RIGHT', 40: 'DOWN' }
 
-const cellSize = 50
 const w = window.innerWidth
 const h = window.innerHeight
 const wMenu = 400
@@ -18,12 +17,13 @@ const hMenu = 320
 
 let rows = 12
 let cols = 16
+let cellSize = 50
 let limitSnakes = 2
 let serverAddress = window.location.origin
 
 let refreshDelay = 50
-let moveDalay = 50
-let moveTime = 400
+let moveDalay = 20
+let moveTime = 300
 let speed = 4
 let intervalIdSnakesCount
 let intervalIdGameStarted
@@ -31,9 +31,6 @@ let intervalIdGameStep
 let snakeId = 0
 let prevKeyCode = RIGHT
 let keyCode = RIGHT
-
-const margin_side = 0//Math.floor((w - cellSize * cols) / 2)
-const margin_top = 0//Math.floor((h - cellSize * rows) / 2)
 
 function initSnakeLimit() {
     let setting = document.createElement('div')
@@ -218,22 +215,30 @@ function waitingSnakes() {
     }, refreshDelay)
 }
 
+function calculateCellSize() {
+    let h_limit = Math.floor(h / rows)
+    let w_limit = Math.floor(w / cols)
+    cellSize = Math.min(h_limit, w_limit)
+
+    cellSize = Math.min(Math.floor(100 / rows), Math.floor(100 / cols))
+    console.log('cellSize ', cellSize)
+}
+
 function initField() {
     let field = document.getElementsByClassName('field')[0]
-    field.style.top = `${(h / 2) - (rows / 2) * cellSize}px`
-    field.style.left = `${(w / 2) - (cols / 2) * cellSize}px`
+    calculateCellSize()
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             let cell = document.createElement('div')
             cell.className = 'cell'
-            cell.style.top = `${i * cellSize}px`
+            /*cell.style.top = `${i * cellSize}px`
             cell.style.left = `${j * cellSize}px`
             cell.style.height = `${cellSize}px`
-            cell.style.width = `${cellSize}px`
-            cell.style.marginLeft = `${margin_side}px`
-            cell.style.marginRight = `${margin_side}px`
-            cell.style.marginTop = `${margin_top}px`
-            cell.style.marginBottom = `${margin_top}px`
+            cell.style.width = `${cellSize}px`*/
+            cell.style.top = `${i * cellSize}vh`
+            cell.style.left = `${j * cellSize}vw`
+            cell.style.height = `${cellSize}vh`
+            cell.style.width = `${cellSize}vw`
             field.appendChild(cell)
         }
     }
@@ -440,7 +445,7 @@ function startButtonClick() {
         }
     })
     startGame()
-    document.getElementById("background-music").play(); 
+    document.getElementById("background-music").play();
 }
 
 function setDirection(dir) {
@@ -456,21 +461,19 @@ function setDirection(dir) {
 
 async function keyBar(e) {
     e = e || window.Event
-
-    prevKeyCode = await fetch(`${serverAddress}/direction/${snakeId}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(response => response.dir)
-
     if ([RIGHT, LEFT, UP, DOWN].includes(e.keyCode)) {
         if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
             e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
             keyCode = e.keyCode
+            prevKeyCode = await fetch(`${serverAddress}/direction/${snakeId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(response => response.dir)
         }
     }
 }

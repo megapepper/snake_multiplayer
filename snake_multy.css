@@ -7,15 +7,20 @@ body {
 
 .field {
     position: absolute;
-    background-color: #6e1515d8;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #6e1515b5;
     border-color: black;
-
+    height: 80vh;
+    aspect-ratio: 1 / 1;
 }
 
 .cell {
     position: absolute;
     background-color: #24bb33d3;
     border: 1px dotted #409e4795;
+    aspect-ratio: 1 / 1
 }
 
 .snake {
