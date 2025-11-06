@@ -16,7 +16,7 @@ const wMenu = 400
 const hMenu = 320
 
 let rows = 12
-let cols = 16
+let cols = 12
 let cellSize = 50
 let limitSnakes = 2
 let serverAddress = window.location.origin
@@ -70,7 +70,7 @@ function initRowCount() {
     let setting = document.createElement('div')
     setting.className = 'setting'
     let setName = document.createElement('div')
-    setName.textContent = 'Row count: '
+    setName.textContent = 'Field size: '
     let edit = document.createElement('input')
     edit.id = 'row-count'
     edit.className = 'edit'
@@ -83,7 +83,7 @@ function initRowCount() {
     return setting
 }
 
-function initColumnCount() {
+/*function initColumnCount() {
     let setting = document.createElement('div')
     setting.className = 'setting'
     let setName = document.createElement('div')
@@ -98,7 +98,7 @@ function initColumnCount() {
     setting.appendChild(setName)
     setting.appendChild(edit)
     return setting
-}
+}*/
 
 function initCreateButton() {
     let createButton = document.createElement('button')
@@ -127,7 +127,7 @@ function initMenu() {
     menu.appendChild(initSnakeLimit())
     menu.appendChild(initSpeed())
     menu.appendChild(initRowCount())
-    menu.appendChild(initColumnCount())
+    //menu.appendChild(initColumnCount())
     menu.appendChild(initCreateButton())
     menu.appendChild(initConnectButton())
 
@@ -215,29 +215,22 @@ function waitingSnakes() {
     }, refreshDelay)
 }
 
-function calculateCellSize() {
-    let h_limit = Math.floor(h / rows)
-    let w_limit = Math.floor(w / cols)
-    cellSize = Math.min(h_limit, w_limit)
-
-    cellSize = Math.min(Math.floor(100 / rows), Math.floor(100 / cols))
-    console.log('cellSize ', cellSize)
+function calculateCellSize(width) {
+    cellSize = width / cols
 }
 
 function initField() {
     let field = document.getElementsByClassName('field')[0]
-    calculateCellSize()
+    let fieldWidth = 50
+    field.style.width = `${fieldWidth}vw`
+    calculateCellSize(fieldWidth)
     for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
+        for (let j = 0; j < rows; j++) {
             let cell = document.createElement('div')
             cell.className = 'cell'
-            /*cell.style.top = `${i * cellSize}px`
-            cell.style.left = `${j * cellSize}px`
-            cell.style.height = `${cellSize}px`
-            cell.style.width = `${cellSize}px`*/
-            cell.style.top = `${i * cellSize}vh`
+            cell.style.top = `${i * cellSize}vw`
             cell.style.left = `${j * cellSize}vw`
-            cell.style.height = `${cellSize}vh`
+            cell.style.height = `${cellSize}vw`
             cell.style.width = `${cellSize}vw`
             field.appendChild(cell)
         }
@@ -417,7 +410,7 @@ async function createButtonClick() {
     speed = document.getElementById('speed-snake').value
 
     rows = document.getElementById('row-count').value
-    cols = document.getElementById('col-count').value
+    cols = rows //document.getElementById('col-count').value
 
     let menu = document.getElementsByClassName('menu')[0]
     menu.style.visibility = 'hidden'

@@ -12,8 +12,10 @@ body {
     transform: translate(-50%, -50%);
     background-color: #6e1515b5;
     border-color: black;
-    height: 80vh;
     aspect-ratio: 1 / 1;
+    /*display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: repeat(12, 1fr);*/
 }
 
 .cell {
