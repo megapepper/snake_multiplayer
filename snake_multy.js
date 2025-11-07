@@ -118,10 +118,8 @@ function initConnectButton() {
 
 function initMenu() {
     let menu = document.getElementsByClassName('menu')[0]
-    menu.style.top = `${h / 2 - hMenu / 2}px`
-    menu.style.left = `${w / 2 - wMenu / 2}px`
-    menu.style.height = `${hMenu}px`
-    menu.style.width = `${wMenu}px`
+    let width = 40
+    menu.style.width = `${width}vw`
     menu.style.visibility = 'visible'
 
     menu.appendChild(initSnakeLimit())
@@ -221,17 +219,17 @@ function calculateCellSize(width) {
 
 function initField() {
     let field = document.getElementsByClassName('field')[0]
-    let fieldWidth = 50
-    field.style.width = `${fieldWidth}vw`
+    let fieldWidth = 100
+    //field.style.width = `${fieldWidth}vw`
     calculateCellSize(fieldWidth)
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < rows; j++) {
             let cell = document.createElement('div')
             cell.className = 'cell'
-            cell.style.top = `${i * cellSize}vw`
-            cell.style.left = `${j * cellSize}vw`
-            cell.style.height = `${cellSize}vw`
-            cell.style.width = `${cellSize}vw`
+            cell.style.top = `${i * cellSize}%`
+            cell.style.left = `${j * cellSize}%`
+            cell.style.height = `${cellSize}%`
+            cell.style.width = `${cellSize}%`
             field.appendChild(cell)
         }
     }

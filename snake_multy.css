@@ -5,23 +5,27 @@ body {
     background-color: #6e1515c3;
 }
 
+.container {
+    position: relative;
+    min-height: 100vh;
+}
+
 .field {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     background-color: #6e1515b5;
     border-color: black;
+    inset: 0;
+    margin: auto;
+    max-width: 100%;
+    max-height: 100%;
     aspect-ratio: 1 / 1;
-    /*display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-template-rows: repeat(12, 1fr);*/
 }
 
 .cell {
     position: absolute;
     background-color: #24bb33d3;
-    border: 1px dotted #409e4795;
+    border: 1px dotted #0c1c0d95;
+    box-sizing: border-box;
     aspect-ratio: 1 / 1
 }
 
@@ -61,6 +65,9 @@ body {
 
 .menu {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: #bd65b8;
     border: 2px solid #80367b;
     border-radius: 5%;
