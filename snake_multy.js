@@ -118,14 +118,12 @@ function initConnectButton() {
 
 function initMenu() {
     let menu = document.getElementsByClassName('menu')[0]
-    let width = 40
-    menu.style.width = `${width}vw`
+    menu.style.width = `${wMenu}px`
     menu.style.visibility = 'visible'
 
     menu.appendChild(initSnakeLimit())
     menu.appendChild(initSpeed())
     menu.appendChild(initRowCount())
-    //menu.appendChild(initColumnCount())
     menu.appendChild(initCreateButton())
     menu.appendChild(initConnectButton())
 
@@ -135,8 +133,6 @@ function initMenu() {
 
 function initWaitingStart() {
     let waiting_start = document.getElementsByClassName('waiting-start')[0]
-    waiting_start.style.top = `${h / 2 - hMenu / 2}px`
-    waiting_start.style.left = `${w / 2 - wMenu / 2}px`
     waiting_start.style.height = `${hMenu / 2}px`
     waiting_start.style.width = `${wMenu}px`
     waiting_start.style.visibility = 'hidden'
@@ -144,9 +140,7 @@ function initWaitingStart() {
 
 function initWaitingSnakes() {
     let waiting_snake = document.getElementsByClassName('waiting-snakes')[0]
-    waiting_snake.style.top = `${h / 2 - hMenu / 2}px`
-    waiting_snake.style.left = `${w / 2 - wMenu / 2}px`
-    waiting_snake.style.height = `${hMenu}px`
+    waiting_snake.style.height = `${hMenu / 2}px`
     waiting_snake.style.width = `${wMenu}px`
     waiting_snake.style.visibility = 'hidden'
 
@@ -220,7 +214,6 @@ function calculateCellSize(width) {
 function initField() {
     let field = document.getElementsByClassName('field')[0]
     let fieldWidth = 100
-    //field.style.width = `${fieldWidth}vw`
     calculateCellSize(fieldWidth)
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < rows; j++) {

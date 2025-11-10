@@ -26,7 +26,6 @@ body {
     background-color: #24bb33d3;
     border: 1px dotted #0c1c0d95;
     box-sizing: border-box;
-    aspect-ratio: 1 / 1
 }
 
 .snake {
@@ -80,6 +79,9 @@ body {
 
 .waiting-snakes {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: #bd65b8;
     border: 2px solid #80367b;
     border-radius: 5%;
@@ -94,6 +96,9 @@ body {
 
 .waiting-start {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: #bd65b8;
     border: 2px solid #80367b;
     border-radius: 5%;
@@ -115,8 +120,9 @@ body {
 }
 
 .setting {
+    
     display: grid;
-    grid-template-columns: 3fr 1fr 0.5fr;
+    grid-template-columns: 3fr 1fr 1fr;
     text-align: left;
     align-items: center;
     height: 8%;
@@ -157,8 +163,8 @@ body {
 
 
 .edit {
-    height: 20px;
-    width: 150px;
+    height: 80%;
+    width: 100%;
     text-align: center;
     background-color: #be6cba;
     font-size: 16px;
