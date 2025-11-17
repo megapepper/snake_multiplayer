@@ -2,6 +2,16 @@
 
 Classic snake game for many players
 
+### Starting the server
+
+Run node routes.js
+
+### Game page address
+
+Open [Your_IP_address]/ui/
+
+### Simple rules
+
 You can start your own game or join another game 
 
 For starting your own game you can configure settings:
