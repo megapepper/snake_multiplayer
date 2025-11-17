@@ -1,13 +1,14 @@
 body {
-    height: 100vh;
+    height: 100dvh;
     padding: 0;
     margin: 0;
     background-color: #6e1515c3;
+    overflow: hidden;
 }
 
 .container {
     position: relative;
-    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .field {
@@ -170,4 +171,19 @@ body {
     font-size: 16px;
     color: black;
     border: 1px solid black;
+}
+.swiper-container {
+    position: relative;
+    overflow: hidden;
+    height: 100dvh;
+    padding: 0;
+    margin: 0;
+}
+.swiper-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s ease-out;
 }

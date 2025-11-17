@@ -32,6 +32,60 @@ let snakeId = 0
 let prevKeyCode = RIGHT
 let keyCode = RIGHT
 
+let startX, startY;
+let swipeElement
+
+async function resetPrevDir() {
+    prevKeyCode = await fetch(`${serverAddress}/direction/${snakeId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(response => response.dir)
+}
+
+function swipeActions() {
+    swipeElement.addEventListener('touchstart', function (event) {
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+    });
+
+    swipeElement.addEventListener('touchend', function (event) {
+        let endX = event.changedTouches[0].clientX;
+        let endY = event.changedTouches[0].clientY;
+
+        let dx = endX - startX;
+        let dy = endY - startY;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Горизонтальный свайп
+            if (dx > 30) {
+                console.log('Swipe right');
+                // Ваша логика для свайпа вправо
+                keyCode = RIGHT
+            } else if (dx < -30) {
+                console.log('Swipe left');
+                // Ваша логика для свайпа влево
+                keyCode = LEFT
+            }
+        } else {
+            // Вертикальный свайп
+            if (dy > 30) {
+                console.log('Swipe down');
+                // Ваша логика для свайпа вниз
+                keyCode = DOWN
+            } else if (dy < -30) {
+                console.log('Swipe up');
+                // Ваша логика для свайпа вверх
+                keyCode = UP
+            }
+        }
+        resetPrevDir()
+    });
+}
 function initSnakeLimit() {
     let setting = document.createElement('div')
     setting.className = 'setting'
@@ -82,23 +136,6 @@ function initRowCount() {
     setting.appendChild(edit)
     return setting
 }
-
-/*function initColumnCount() {
-    let setting = document.createElement('div')
-    setting.className = 'setting'
-    let setName = document.createElement('div')
-    setName.textContent = 'Column count: '
-    let edit = document.createElement('input')
-    edit.id = 'col-count'
-    edit.className = 'edit'
-    edit.type = 'number'
-    edit.min = '10'
-    edit.max = '20'
-    edit.value = cols
-    setting.appendChild(setName)
-    setting.appendChild(edit)
-    return setting
-}*/
 
 function initCreateButton() {
     let createButton = document.createElement('button')
@@ -271,14 +308,14 @@ async function drowField() {
 }
 
 async function showLoss() {
-    let state = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
+    let response = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         }
     })
-        .then(response => response.json())
+    let state = await response.json()
     alert(`You lost! Your earned ${state.cntFoodEaten[snakeId]} points. Let's play again?`)
     location.reload()
 }
@@ -369,6 +406,8 @@ function waitingStart() {
 
 function initial() {
     initMenu()
+    swipeElement = document.getElementsByClassName('swiper-item')[0]
+    swipeActions()
 }
 
 function initGame(limitSnakes, speed, width, height) {
@@ -449,15 +488,7 @@ async function keyBar(e) {
         if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
             e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
             keyCode = e.keyCode
-            prevKeyCode = await fetch(`${serverAddress}/direction/${snakeId}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(response => response.dir)
+            resetPrevDir()
         }
     }
 }
