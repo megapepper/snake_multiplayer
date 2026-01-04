@@ -83,6 +83,7 @@ function swipeActions() {
                 keyCode = UP
             }
         }
+        console.log('swipe')
         resetPrevDir()
     });
 }
@@ -210,9 +211,9 @@ async function connectButtonClick() {
             'Content-Type': 'application/json'
         }
     })
-        .then(response => response.json())
-        .then(response => response.snakeId)
-    snakeId = parseInt(snakeIdStr)
+
+    let response_json = await snakeIdStr.json()
+    snakeId = parseInt(response_json.snakeId)
 
     let elem = document.getElementsByClassName('menu')[0]
     elem.style.visibility = 'hidden'
@@ -239,9 +240,10 @@ function waitingSnakes() {
     let menu = document.getElementsByClassName('waiting-snakes')[0]
     menu.style.visibility = 'visible'
 
-    intervalIdSnakesCount = setInterval(() => {
-        refreshSnakesCount()
-    }, refreshDelay)
+    //WS вместо этого интервала теперь обработчик сообщения WS типа 'connection' - вызов функции refreshSnakesCount()
+    //intervalIdSnakesCount = setInterval(() => {
+    //    refreshSnakesCount()
+    //}, refreshDelay)
 }
 
 function calculateCellSize(width) {
@@ -364,6 +366,8 @@ async function startGame() {
         .then(response => response.json())
         .then(reponse => reponse.timeMove)
 
+    keyCode = RIGHT
+    prevKeyCode = RIGHT
     intervalIdGameStep = setInterval(() => {
         setDirection(keyCode)
         drowField()
@@ -405,6 +409,7 @@ function waitingStart() {
 }
 
 function initial() {
+    initialWS()
     initMenu()
     swipeElement = document.getElementsByClassName('swiper-item')[0]
     swipeActions()
@@ -452,7 +457,7 @@ async function createButtonClick() {
     waitingSnakes()
 }
 
-function startButtonClick() {
+async function startButtonClick() {
     let waiting_start = document.getElementsByClassName('waiting-start')[0]
     waiting_start.style.visibility = 'hidden'
     let waiting_snakes = document.getElementsByClassName('waiting-snakes')[0]
@@ -460,7 +465,7 @@ function startButtonClick() {
 
     clearInterval(intervalIdSnakesCount)
 
-    fetch(`${serverAddress}/start`, {
+    await fetch(`${serverAddress}/start`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -480,6 +485,7 @@ function setDirection(dir) {
         },
         body: JSON.stringify({ "dir": directions[dir] })
     })
+
 }
 
 async function keyBar(e) {
@@ -492,3 +498,26 @@ async function keyBar(e) {
         }
     }
 }
+
+function initialWS() {
+    const ws = new WebSocket(''); // Adjust port if needed
+
+    ws.onopen = () => {
+        console.log('Connected to WebSocket server');
+    };
+
+    ws.onmessage = event => {
+        const parsedData = JSON.parse(event.data);
+        if (parsedData.type == 'connection') {
+            refreshSnakesCount()
+        }
+    };
+
+    ws.onclose = () => {
+        console.log('Disconnected from WebSocket server');
+    };
+
+    ws.onerror = error => {
+        console.error('WebSocket error:', error);
+    };
+};

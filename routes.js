@@ -1,5 +1,7 @@
 import * as snake from './snake.cjs'
 import express from 'express'
+import http from 'http';
+import { WebSocketServer } from 'ws';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -14,6 +16,38 @@ const verbose = args.includes('--verbose');
 const app = express()
 const port = 8080
 const host = "0.0.0.0"
+
+//
+const server = http.createServer(app);
+
+server.listen(port, host, () => {
+    console.log(`Server listening on port ${port}`);
+});
+const wss = new WebSocketServer({ server });
+
+
+wss.on('connection', ws => {
+    console.log('New player connected!');
+
+    ws.on('message', message => {
+        console.log(`Received message: ${message}`);
+        // Broadcast the message to all connected clients
+        wss.clients.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(message.toString()); // Ensure message is a string
+            }
+        });
+    });
+
+    ws.on('close', () => {
+        console.log('Player disconnected');
+    });
+
+    ws.on('error', error => {
+        console.error('WebSocket error:', error);
+    });
+});
+//
 
 const directions = { LEFT: 'LEFT', UP: 'UP', RIGHT: 'RIGHT', DOWN: 'DOWN' }
 
@@ -51,6 +85,11 @@ app.get('/ui/snake_multy.css', (req, res) => {
 app.get('/ui/snake_multy.js', (req, res) => {
     res
         .sendFile(__dirname + '/' + './snake_multy.js');
+});
+
+app.get('/ui/async_tests.js', (req, res) => {
+    res
+        .sendFile(__dirname + '/' + './async_tests.js');
 });
 
 app.get('/ui/audio.mp3', (req, res) => {
@@ -96,7 +135,7 @@ app.get('/time_move', (_, res) => {
 
 app.get('/direction/:id', (req, res) => {
     let snakeId = parseInt(req.params.id, 10)
-    res.json({ dir: g_game.getDir(snakeId)})
+    res.json({ dir: g_game.getDir(snakeId) })
 })
 
 app.post('/connect', (_, res) => {
@@ -116,6 +155,15 @@ app.post('/connect', (_, res) => {
             let new_id = g_config.add_connection() - 1
             res.json({ snakeId: new_id })
             logif(verbose, `Success, snake number ${new_id} is connected\n`)
+
+            //WSS: тут нужно отправить сообщение типа 'connection'
+            let message = "{\"type\": \"connection\", \"data\": \"added\"}"
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(message); // Ensure message is a string
+                    console.log('sent message: ', message)
+                }
+            });
         }
     }
 })
