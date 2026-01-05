@@ -63,27 +63,18 @@ function swipeActions() {
         if (Math.abs(dx) > Math.abs(dy)) {
             // Горизонтальный свайп
             if (dx > 30) {
-                console.log('Swipe right');
-                // Ваша логика для свайпа вправо
                 keyCode = RIGHT
             } else if (dx < -30) {
-                console.log('Swipe left');
-                // Ваша логика для свайпа влево
                 keyCode = LEFT
             }
         } else {
             // Вертикальный свайп
             if (dy > 30) {
-                console.log('Swipe down');
-                // Ваша логика для свайпа вниз
                 keyCode = DOWN
             } else if (dy < -30) {
-                console.log('Swipe up');
-                // Ваша логика для свайпа вверх
                 keyCode = UP
             }
         }
-        console.log('swipe')
         resetPrevDir()
     });
 }
@@ -240,7 +231,7 @@ function waitingSnakes() {
     let menu = document.getElementsByClassName('waiting-snakes')[0]
     menu.style.visibility = 'visible'
 
-    //WS вместо этого интервала теперь обработчик сообщения WS типа 'connection' - вызов функции refreshSnakesCount()
+    //WS вместо этого интервала теперь обработчик сообщения WS типа 'connection'
     //intervalIdSnakesCount = setInterval(() => {
     //    refreshSnakesCount()
     //}, refreshDelay)
@@ -403,9 +394,10 @@ function waitingStart() {
     info.appendChild(setName)
     menu.appendChild(info)
 
-    intervalIdGameStarted = setInterval(async () => {
-        await refreshGameStarted()
-    }, refreshDelay)
+    //WS вместо этого интервала теперь обработчик сообщения WS типа 'start'
+    //intervalIdGameStarted = setInterval(async () => {
+    //    await refreshGameStarted()
+    //}, refreshDelay)
 }
 
 function initial() {
@@ -502,19 +494,17 @@ async function keyBar(e) {
 function initialWS() {
     const ws = new WebSocket(''); // Adjust port if needed
 
-    ws.onopen = () => {
-        console.log('Connected to WebSocket server');
-    };
-
     ws.onmessage = event => {
         const parsedData = JSON.parse(event.data);
         if (parsedData.type == 'connection') {
             refreshSnakesCount()
         }
-    };
 
-    ws.onclose = () => {
-        console.log('Disconnected from WebSocket server');
+        if (parsedData.type == 'start') {
+            let menu = document.getElementsByClassName('waiting-start')[0]
+            menu.style.visibility = 'hidden'
+            startGame()
+        }
     };
 
     ws.onerror = error => {

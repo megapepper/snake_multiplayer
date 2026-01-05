@@ -27,10 +27,7 @@ const wss = new WebSocketServer({ server });
 
 
 wss.on('connection', ws => {
-    console.log('New player connected!');
-
     ws.on('message', message => {
-        console.log(`Received message: ${message}`);
         // Broadcast the message to all connected clients
         wss.clients.forEach(client => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -39,9 +36,6 @@ wss.on('connection', ws => {
         });
     });
 
-    ws.on('close', () => {
-        console.log('Player disconnected');
-    });
 
     ws.on('error', error => {
         console.error('WebSocket error:', error);
@@ -156,14 +150,13 @@ app.post('/connect', (_, res) => {
             res.json({ snakeId: new_id })
             logif(verbose, `Success, snake number ${new_id} is connected\n`)
 
-            //WSS: тут нужно отправить сообщение типа 'connection'
+            //WSS: отправка всем клиентам сообщение типа 'connection'
             let message = "{\"type\": \"connection\", \"data\": \"added\"}"
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(message); // Ensure message is a string
-                    console.log('sent message: ', message)
                 }
-            });
+            })
         }
     }
 })
@@ -173,6 +166,13 @@ app.post('/start', (_, res) => {
     startInterval()
     res.send('Game started')
     logif(verbose, '--- GAME STARTED ---\n')
+    //WSS: отправка всем клиентам сообщение типа 'start'
+    let message = "{\"type\": \"start\", \"data\": \"on\"}"
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    })
 })
 
 app.get('/state/:id', (req, res) => {
