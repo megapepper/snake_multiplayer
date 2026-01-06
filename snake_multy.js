@@ -29,23 +29,9 @@ let intervalIdSnakesCount
 let intervalIdGameStarted
 let intervalIdGameStep
 let snakeId = 0
-let prevKeyCode = RIGHT
-let keyCode = RIGHT
 
 let startX, startY;
 let swipeElement
-
-async function resetPrevDir() {
-    prevKeyCode = await fetch(`${serverAddress}/direction/${snakeId}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(response => response.dir)
-}
 
 function swipeActions() {
     swipeElement.addEventListener('touchstart', function (event) {
@@ -63,19 +49,18 @@ function swipeActions() {
         if (Math.abs(dx) > Math.abs(dy)) {
             // Горизонтальный свайп
             if (dx > 30) {
-                keyCode = RIGHT
+                setDirection(RIGHT)
             } else if (dx < -30) {
-                keyCode = LEFT
+                setDirection(LEFT)
             }
         } else {
             // Вертикальный свайп
             if (dy > 30) {
-                keyCode = DOWN
+                setDirection(DOWN)
             } else if (dy < -30) {
-                keyCode = UP
+                setDirection(UP)
             }
         }
-        resetPrevDir()
     });
 }
 function initSnakeLimit() {
@@ -258,7 +243,7 @@ function initField() {
     }
 }
 
-async function drowField() {
+async function drawField() {
     let state = await fetch(`${serverAddress}/state/0`, {
         method: 'GET',
         headers: {
@@ -357,13 +342,16 @@ async function startGame() {
         .then(response => response.json())
         .then(reponse => reponse.timeMove)
 
-    keyCode = RIGHT
-    prevKeyCode = RIGHT
-    intervalIdGameStep = setInterval(() => {
-        setDirection(keyCode)
-        drowField()
-        checkFinish()
-    }, 10)
+    //вместо этого интервала теперь обработчик WSS сообщения типа 'direction'
+    //intervalIdGameStep = setInterval(() => {
+    //    setDirection(keyCode)
+    //    drowField()
+    //    checkFinish()
+    //}, 10)
+
+    //но здесь тоже 1 раз нужно задать и отрисовать направление
+    setDirection(RIGHT)
+    drawField()
 }
 
 async function refreshGameStarted() {
@@ -483,11 +471,7 @@ function setDirection(dir) {
 async function keyBar(e) {
     e = e || window.Event
     if ([RIGHT, LEFT, UP, DOWN].includes(e.keyCode)) {
-        if (e.keyCode == RIGHT && prevKeyCode != LEFT || e.keyCode == LEFT && prevKeyCode != RIGHT ||
-            e.keyCode == UP && prevKeyCode != DOWN || e.keyCode == DOWN && prevKeyCode != UP) {
-            keyCode = e.keyCode
-            resetPrevDir()
-        }
+        setDirection(e.keyCode)
     }
 }
 
@@ -495,6 +479,7 @@ function initialWS() {
     const ws = new WebSocket(''); // Adjust port if needed
 
     ws.onmessage = event => {
+        console.log('hahahaha')
         const parsedData = JSON.parse(event.data);
         if (parsedData.type == 'connection') {
             refreshSnakesCount()
@@ -504,6 +489,10 @@ function initialWS() {
             let menu = document.getElementsByClassName('waiting-start')[0]
             menu.style.visibility = 'hidden'
             startGame()
+        }
+        if (parsedData.type == 'direction' || parsedData.type == 'step') {
+            drawField()
+            checkFinish()
         }
     };
 

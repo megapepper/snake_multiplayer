@@ -17,7 +17,7 @@ const app = express()
 const port = 8080
 const host = "0.0.0.0"
 
-//
+
 const server = http.createServer(app);
 
 server.listen(port, host, () => {
@@ -35,13 +35,11 @@ wss.on('connection', ws => {
             }
         });
     });
-
-
     ws.on('error', error => {
         console.error('WebSocket error:', error);
     });
 });
-//
+
 
 const directions = { LEFT: 'LEFT', UP: 'UP', RIGHT: 'RIGHT', DOWN: 'DOWN' }
 
@@ -96,9 +94,19 @@ app.get('/ping', (_, res) => {
     res.send('OK')
 })
 
+function sendStepMsg(result) {
+    //WSS: отправка всем клиентам сообщение типа 'step'
+    let message = "{\"type\": \"step\", \"data\": true}"
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    })
+}
+
 app.post('/init', (req, res) => {
     clearInterval(g_intervalId)
-    g_config = new snake.Game.Config(req.body.limitConnections, req.body.speed, req.body.width, req.body.height)
+    g_config = new snake.Game.Config(req.body.limitConnections, req.body.speed, req.body.width, req.body.height, sendStepMsg)
     g_game = null
     res.json({ GameInited: true })
     logif(verbose, '--- GAME INITED ---\n')
@@ -204,6 +212,10 @@ app.get('/state/:id', (req, res) => {
 })
 
 app.post('/direction/:id', (req, res) => {
+    if (!g_game) {
+        res.status(400).send('game is not started')
+        return
+    }
     let snakeId = parseInt(req.params.id, 10)
     if (verbose) { console.log(`Trying to set direction for snake  ${snakeId}: `) }
     if (!g_game.checkSnakeExists(snakeId)) {
@@ -222,6 +234,13 @@ app.post('/direction/:id', (req, res) => {
             g_game.setDir(snakeId, dir)
             res.send('got direction')
             logif(verbose, `Success, direction ${dir} for snake ${snakeId} setted\n`)
+            //WSS: отправка всем клиентам сообщение типа 'direction'
+            let message = `{\"type\": \"direction\", \"snakeId\": ${snakeId}, \"dir\": \"${dir}\"}`
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(message);
+                }
+            })
         }
     }
 })

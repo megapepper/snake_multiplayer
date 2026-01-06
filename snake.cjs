@@ -17,6 +17,7 @@ class Game {
     #stateNumber
     #delayMove
     #timeMove
+    #callback
 
     constructor(config) {
         this.#DIR = Object.freeze({ 'LEFT': 'LEFT', 'UP': 'UP', 'RIGHT': 'RIGHT', 'DOWN': 'DOWN' })
@@ -24,6 +25,7 @@ class Game {
         this.#initCntFood = config.get_cntInitFood()
         this.#FIELD_WIDTH = config.get_fieldSizeW()
         this.#FIELD_HEIGHT = config.get_fieldSizeH()
+        this.#callback = config.get_callback()
 
         this.#snakes = []
         this.#food = []
@@ -52,13 +54,16 @@ class Game {
         #delayMove
         #maxDelayMove
         #timeMove
+        #callback
 
-        constructor(limitSnakes, speed, w, h) {
+        constructor(limitSnakes, speed, w, h, callback) {
             this.#limitSnakes = limitSnakes
             this.cntConnections = 0
 
             this.#FIELD_WIDTH = w
             this.#FIELD_HEIGHT = h
+
+            this.#callback = callback
 
             this.#initCntFood = 3
 
@@ -93,6 +98,10 @@ class Game {
 
         get_timesMoving() {
             return [this.#delayMove, this.#timeMove]
+        }
+
+        get_callback() {
+            return this.#callback
         }
     }
 
@@ -152,7 +161,7 @@ class Game {
         for (let i = 0; i < this.#cntConnections; i++) {
             this.#checkLoss(i)
         }
-
+        this.#callback({step: true})
     }
 
     add_stateNumber() {
@@ -285,7 +294,6 @@ class Game {
         }
     }
 }
-
 
 module.exports = { Game };
 
