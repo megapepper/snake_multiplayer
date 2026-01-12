@@ -243,16 +243,7 @@ function initField() {
     }
 }
 
-async function drawField() {
-    let state = await fetch(`${serverAddress}/state/0`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-
+async function drawField(state) {
     let cells = document.getElementsByClassName('cell')
 
     for (const cell of cells) {
@@ -311,16 +302,7 @@ async function showWin() {
     location.reload()
 }
 
-async function checkFinish() {
-    let state = await fetch(`${serverAddress}/state/${parseInt(snakeId)}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-
+async function checkFinish(state) {
     if (state.isFinish) {
         if (parseInt(state.winnerId) == snakeId) {
             showWin()
@@ -341,36 +323,8 @@ async function startGame() {
     })
         .then(response => response.json())
         .then(reponse => reponse.timeMove)
-
-    //вместо этого интервала теперь обработчик WSS сообщения типа 'direction'
-    //intervalIdGameStep = setInterval(() => {
-    //    setDirection(keyCode)
-    //    drowField()
-    //    checkFinish()
-    //}, 10)
-
-    //но здесь тоже 1 раз нужно задать и отрисовать направление
-    setDirection(RIGHT)
-    drawField()
 }
 
-async function refreshGameStarted() {
-    let isStarted = await fetch(`${serverAddress}/check_start`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(response => response.isStarted)
-    if (isStarted) {
-        let menu = document.getElementsByClassName('waiting-start')[0]
-        menu.style.visibility = 'hidden'
-        clearInterval(intervalIdGameStarted)
-        startGame()
-    }
-}
 
 function waitingStart() {
     let menu = document.getElementsByClassName('waiting-start')[0]
@@ -381,11 +335,6 @@ function waitingStart() {
     setName = document.createElement('div')
     info.appendChild(setName)
     menu.appendChild(info)
-
-    //WS вместо этого интервала теперь обработчик сообщения WS типа 'start'
-    //intervalIdGameStarted = setInterval(async () => {
-    //    await refreshGameStarted()
-    //}, refreshDelay)
 }
 
 function initial() {
@@ -479,7 +428,6 @@ function initialWS() {
     const ws = new WebSocket(''); // Adjust port if needed
 
     ws.onmessage = event => {
-        console.log('hahahaha')
         const parsedData = JSON.parse(event.data);
         if (parsedData.type == 'connection') {
             refreshSnakesCount()
@@ -490,9 +438,9 @@ function initialWS() {
             menu.style.visibility = 'hidden'
             startGame()
         }
-        if (parsedData.type == 'direction' || parsedData.type == 'step') {
-            drawField()
-            checkFinish()
+        if (parsedData.type == 'step') {
+            drawField(parsedData.state)
+            checkFinish(parsedData.state)
         }
     };
 

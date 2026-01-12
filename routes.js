@@ -96,7 +96,7 @@ app.get('/ping', (_, res) => {
 
 function sendStepMsg(result) {
     //WSS: отправка всем клиентам сообщение типа 'step'
-    let message = "{\"type\": \"step\", \"data\": true}"
+    let message = `{\"type\": \"step\", \"state\": ${JSON.stringify(g_game.getState(0))}}`
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(message);
@@ -234,13 +234,6 @@ app.post('/direction/:id', (req, res) => {
             g_game.setDir(snakeId, dir)
             res.send('got direction')
             logif(verbose, `Success, direction ${dir} for snake ${snakeId} setted\n`)
-            //WSS: отправка всем клиентам сообщение типа 'direction'
-            let message = `{\"type\": \"direction\", \"snakeId\": ${snakeId}, \"dir\": \"${dir}\"}`
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(message);
-                }
-            })
         }
     }
 })
