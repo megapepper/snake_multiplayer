@@ -104,6 +104,12 @@ function sendStepMsg(result) {
     })
 }
 
+app.post('/stop', (req, res) => {
+    clearInterval(g_intervalId)
+    res.json({ GameStopped: true })
+    logif(verbose, '--- GAME STOPPED ---\n')
+})
+
 app.post('/init', (req, res) => {
     clearInterval(g_intervalId)
     g_config = new snake.Game.Config(req.body.limitConnections, req.body.speed, req.body.width, req.body.height, sendStepMsg)
@@ -159,7 +165,7 @@ app.post('/connect', (_, res) => {
             logif(verbose, `Success, snake number ${new_id} is connected\n`)
 
             //WSS: отправка всем клиентам сообщение типа 'connection'
-            let message = "{\"type\": \"connection\", \"data\": \"added\"}"
+            let message = `{\"type\": \"connection\", \"cnt\": \"${g_config.get_cntConnections()}\"}`
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(message); // Ensure message is a string

@@ -199,27 +199,14 @@ async function connectButtonClick() {
     waitingStart()
 }
 
-function refreshSnakesCount() {
+function refreshSnakesCount(cnt) {
     let countSnakes = document.getElementById('count-snake')
-    fetch(`${serverAddress}/count`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(response => countSnakes.innerHTML = response.countSnakes.toString())
+    countSnakes.innerHTML = cnt
 }
 
 function waitingSnakes() {
     let menu = document.getElementsByClassName('waiting-snakes')[0]
     menu.style.visibility = 'visible'
-
-    //WS вместо этого интервала теперь обработчик сообщения WS типа 'connection'
-    //intervalIdSnakesCount = setInterval(() => {
-    //    refreshSnakesCount()
-    //}, refreshDelay)
 }
 
 function calculateCellSize(width) {
@@ -338,6 +325,7 @@ function waitingStart() {
 }
 
 function initial() {
+    stopGame()
     initialWS()
     initMenu()
     swipeElement = document.getElementsByClassName('swiper-item')[0]
@@ -352,6 +340,16 @@ function initGame(limitSnakes, speed, width, height) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ "limitConnections": limitSnakes, "speed": speed, "width": width, "height": height })
+    })
+}
+
+function stopGame() {
+    fetch(`${serverAddress}/stop`, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
     })
 }
 
@@ -430,7 +428,7 @@ function initialWS() {
     ws.onmessage = event => {
         const parsedData = JSON.parse(event.data);
         if (parsedData.type == 'connection') {
-            refreshSnakesCount()
+            refreshSnakesCount(parsedData.cnt)
         }
 
         if (parsedData.type == 'start') {
